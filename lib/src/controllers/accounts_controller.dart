@@ -68,28 +68,52 @@ class AccountsController extends GetxController {
   Future<void> refreshAllMetadata() async {
     for (var i = 0; i < accounts.length; i++) {
       final account = accounts[i];
+
+      // Fetch metadata
       final metadata = await _nostr.fetchMetadataForPubkey(account.pubkey);
 
-      if (metadata != null) {
-        final hasChanges = account.name != metadata.name ||
-                          account.picture != metadata.picture;
+      // Fetch relays
+      final relays = await _nostr.fetchRelaysForPubkey(account.pubkey);
 
-        if (hasChanges) {
-          final updated = account.copyWith(
-            name: metadata.name,
-            picture: metadata.picture,
-          );
+      String? newName = metadata?.name;
+      String? newPicture = metadata?.picture;
+      List<String>? newRelays = relays;
 
-          await _db.saveAccount(updated);
-          accounts[i] = updated;
+      final hasChanges = account.name != newName ||
+                        account.picture != newPicture ||
+                        (newRelays != null && !_listEquals(account.relays, newRelays));
 
-          // Update selected account if it's the same
-          if (selectedAccount.value?.id == account.id) {
-            selectedAccount.value = updated;
-          }
+      if (hasChanges) {
+        final updated = account.copyWith(
+          name: newName,
+          picture: newPicture,
+          relays: newRelays ?? account.relays,
+        );
+
+        await _db.saveAccount(updated);
+        accounts[i] = updated;
+
+        // Reconnect with new relays if they changed
+        if (newRelays != null && !_listEquals(account.relays, newRelays) && updated.active) {
+          await _nostr.disconnectAccount(account.id);
+          final settings = await _db.getOrCreateNotificationSettings(account.id);
+          await _nostr.connectAccount(updated, settings);
+        }
+
+        // Update selected account if it's the same
+        if (selectedAccount.value?.id == account.id) {
+          selectedAccount.value = updated;
         }
       }
     }
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   Future<String?> addAccount(String bunkerUrl) async {

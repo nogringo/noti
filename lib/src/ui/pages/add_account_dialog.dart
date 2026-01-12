@@ -55,15 +55,28 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
       // Continue without metadata if fetch fails
     }
 
+    // Fetch user relays from NIP-65
+    List<String> relays = [];
+    try {
+      final userRelayList = await _ndk.userRelayLists.getSingleUserRelayList(ndkAccount.pubkey);
+      if (userRelayList != null && userRelayList.urls.isNotEmpty) {
+        relays = userRelayList.urls.toList();
+      }
+    } catch (_) {
+      // Continue with default relays if fetch fails
+    }
+
+    // Fallback to default relays if none found
+    if (relays.isEmpty) {
+      relays = [
+        'wss://relay.damus.io',
+        'wss://relay.nostr.band',
+        'wss://nos.lol',
+      ];
+    }
+
     // Generate unique ID
     final id = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // Default relays
-    final relays = [
-      'wss://relay.damus.io',
-      'wss://relay.nostr.band',
-      'wss://nos.lol',
-    ];
 
     final account = NotifyAccount(
       id: id,

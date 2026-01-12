@@ -13,11 +13,12 @@ class NostrService extends GetxService {
 
   final Map<String, Ndk> _ndkInstances = {};
   final Map<String, StreamSubscription> _subscriptions = {};
+  final Map<String, StreamSubscription> _dmSubscriptions = {};
   final Map<String, NotificationSettings> _settings = {};
 
-  // Event kinds
-  static const int kindDm = 4;
+  // Event kinds (NIP-17 for DMs)
   static const int kindGiftWrap = 1059;
+  static const int kindDmRelayList = 10050;
   static const int kindNote = 1;
   static const int kindRepost = 6;
   static const int kindReaction = 7;
@@ -56,11 +57,15 @@ class NostrService extends GetxService {
     final settings = _settings[account.id];
     if (ndk == null || settings == null) return;
 
-    final kinds = <int>[];
+    final since = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
+    // Subscribe to DMs on DM relays (NIP-17)
     if (settings.dm) {
-      kinds.addAll([kindDm, kindGiftWrap]);
+      await _subscribeToDms(account, ndk, since);
     }
+
+    // Subscribe to other events on general relays
+    final kinds = <int>[];
     if (settings.mention) {
       kinds.add(kindNote);
     }
@@ -79,7 +84,7 @@ class NostrService extends GetxService {
     final filter = Filter(
       kinds: kinds,
       pTags: [account.pubkey],
-      since: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      since: since,
     );
 
     final response = ndk.requests.subscription(
@@ -94,6 +99,60 @@ class NostrService extends GetxService {
     _subscriptions[account.id] = subscription;
   }
 
+  Future<void> _subscribeToDms(NotifyAccount account, Ndk ndk, int since) async {
+    // Fetch DM relay list (kind 10050) for NIP-17 from user's general relays
+    List<String> dmRelays = await _fetchDmRelays(ndk, account.pubkey, account.relays);
+
+    // Fallback to general relays if no DM relays found
+    if (dmRelays.isEmpty) {
+      dmRelays = account.relays;
+    }
+
+    final dmFilter = Filter(
+      kinds: [kindGiftWrap], // NIP-17 uses gift wraps (kind 1059)
+      pTags: [account.pubkey],
+      since: since,
+    );
+
+    final dmResponse = ndk.requests.subscription(
+      filter: dmFilter,
+      explicitRelays: dmRelays,
+    );
+
+    final dmSubscription = dmResponse.stream.listen((event) {
+      _handleEvent(account, event);
+    });
+
+    _dmSubscriptions[account.id] = dmSubscription;
+  }
+
+  Future<List<String>> _fetchDmRelays(Ndk ndk, String pubkey, List<String> userRelays) async {
+    try {
+      final response = ndk.requests.query(
+        filter: Filter(
+          kinds: [kindDmRelayList],
+          authors: [pubkey],
+          limit: 1,
+        ),
+        explicitRelays: userRelays,
+      );
+
+      await for (final event in response.stream) {
+        // Extract relay URLs from 'relay' tags
+        final relays = <String>[];
+        for (final tag in event.tags) {
+          if (tag.isNotEmpty && tag[0] == 'relay' && tag.length >= 2) {
+            relays.add(tag[1]);
+          }
+        }
+        if (relays.isNotEmpty) {
+          return relays;
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
   void _handleEvent(NotifyAccount account, Nip01Event event) {
     if (_trayService.isPaused) return;
 
@@ -106,8 +165,8 @@ class NostrService extends GetxService {
     final fromName = _shortenPubkey(event.pubKey);
 
     switch (event.kind) {
-      case kindDm:
       case kindGiftWrap:
+        // NIP-17 DM (gift wrapped)
         if (settings.dm) {
           _notificationService.showDmNotification(
             fromName: fromName,
@@ -194,6 +253,20 @@ class NostrService extends GetxService {
     return null;
   }
 
+  /// Fetch relay list for a specific pubkey using any available NDK instance
+  Future<List<String>?> fetchRelaysForPubkey(String pubkey) async {
+    if (_ndkInstances.isEmpty) return null;
+
+    final ndk = _ndkInstances.values.first;
+    try {
+      final userRelayList = await ndk.userRelayLists.getSingleUserRelayList(pubkey);
+      if (userRelayList != null && userRelayList.urls.isNotEmpty) {
+        return userRelayList.urls.toList();
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> updateSettings(String accountId, NotificationSettings settings) async {
     _settings[accountId] = settings;
   }
@@ -201,6 +274,8 @@ class NostrService extends GetxService {
   Future<void> disconnectAccount(String accountId) async {
     await _subscriptions[accountId]?.cancel();
     _subscriptions.remove(accountId);
+    await _dmSubscriptions[accountId]?.cancel();
+    _dmSubscriptions.remove(accountId);
     _ndkInstances.remove(accountId);
     _settings.remove(accountId);
   }
