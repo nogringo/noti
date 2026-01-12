@@ -57,7 +57,13 @@ class SettingsController extends GetxController {
 
     final updated = updater(current);
     await _db.saveNotificationSettings(updated);
-    await _nostr.updateSettings(current.accountId, updated);
     settings.value = updated;
+
+    // Reconnect to apply new filter
+    final account = _accounts.selectedAccount.value;
+    if (account != null && account.active) {
+      await _nostr.disconnectAccount(account.id);
+      await _nostr.connectAccount(account, updated);
+    }
   }
 }

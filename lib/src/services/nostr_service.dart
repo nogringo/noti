@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
@@ -58,6 +59,7 @@ class NostrService extends GetxService {
     if (ndk == null || settings == null) return;
 
     final since = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    dev.log('[NostrService] Subscribing for account ${account.id}, relays: ${account.relays}');
 
     // Subscribe to DMs on DM relays (NIP-17)
     if (settings.dm) {
@@ -93,6 +95,7 @@ class NostrService extends GetxService {
     );
 
     final subscription = response.stream.listen((event) {
+      dev.log('[NostrService] Event received: kind=${event.kind}, id=${event.id.substring(0, 8)}, from=${event.pubKey.substring(0, 8)}');
       _handleEvent(account, event);
     });
 
@@ -105,7 +108,10 @@ class NostrService extends GetxService {
 
     // Fallback to general relays if no DM relays found
     if (dmRelays.isEmpty) {
+      dev.log('[NostrService] No DM relays found (kind 10050), using general relays');
       dmRelays = account.relays;
+    } else {
+      dev.log('[NostrService] DM relays (kind 10050): $dmRelays');
     }
 
     final dmFilter = Filter(
@@ -120,6 +126,7 @@ class NostrService extends GetxService {
     );
 
     final dmSubscription = dmResponse.stream.listen((event) {
+      dev.log('[NostrService] DM Event received: kind=${event.kind}, id=${event.id.substring(0, 8)}, from=${event.pubKey.substring(0, 8)}');
       _handleEvent(account, event);
     });
 
@@ -154,13 +161,22 @@ class NostrService extends GetxService {
   }
 
   void _handleEvent(NotifyAccount account, Nip01Event event) {
-    if (_trayService.isPaused) return;
+    if (_trayService.isPaused) {
+      dev.log('[NostrService] Event ignored: notifications paused');
+      return;
+    }
 
     final settings = _settings[account.id];
-    if (settings == null) return;
+    if (settings == null) {
+      dev.log('[NostrService] Event ignored: no settings for account');
+      return;
+    }
 
     // Don't notify for own events
-    if (event.pubKey == account.pubkey) return;
+    if (event.pubKey == account.pubkey) {
+      dev.log('[NostrService] Event ignored: own event');
+      return;
+    }
 
     final fromName = _shortenPubkey(event.pubKey);
 
@@ -168,8 +184,9 @@ class NostrService extends GetxService {
       case kindGiftWrap:
         // NIP-17 DM (gift wrapped)
         if (settings.dm) {
+          dev.log('[NostrService] Notification: DM from ${event.pubKey.substring(0, 8)}');
           _notificationService.showDmNotification(
-            fromName: fromName,
+            accountId: account.id,
             fromPubkey: event.pubKey,
           );
         }
@@ -177,7 +194,9 @@ class NostrService extends GetxService {
 
       case kindNote:
         if (settings.mention && _isMention(event, account.pubkey)) {
+          dev.log('[NostrService] Notification: Mention from $fromName');
           _notificationService.showMentionNotification(
+            accountId: account.id,
             fromName: fromName,
             eventId: event.id,
           );
@@ -186,13 +205,19 @@ class NostrService extends GetxService {
 
       case kindRepost:
         if (settings.repost) {
-          _notificationService.showRepostNotification(fromName: fromName);
+          dev.log('[NostrService] Notification: Repost from $fromName');
+          _notificationService.showRepostNotification(
+            accountId: account.id,
+            fromName: fromName,
+          );
         }
         break;
 
       case kindReaction:
         if (settings.reaction) {
+          dev.log('[NostrService] Notification: Reaction "${event.content}" from $fromName');
           _notificationService.showReactionNotification(
+            accountId: account.id,
             fromName: fromName,
             reaction: event.content,
           );
@@ -202,7 +227,9 @@ class NostrService extends GetxService {
       case kindZapReceipt:
         if (settings.zap) {
           final amount = _parseZapAmount(event);
+          dev.log('[NostrService] Notification: Zap $amount sats from $fromName');
           _notificationService.showZapNotification(
+            accountId: account.id,
             fromName: fromName,
             amount: amount,
           );

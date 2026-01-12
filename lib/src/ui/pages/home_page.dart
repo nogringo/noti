@@ -6,8 +6,27 @@ import '../../models/models.dart';
 import '../widgets/widgets.dart';
 import 'add_account_dialog.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   String _getAccountDisplayName(NotifyAccount account) {
     return account.name ?? 'Nostr Account';
@@ -17,6 +36,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final accountsController = Get.find<AccountsController>();
     final settingsController = Get.find<SettingsController>();
+    final historyController = Get.find<NotificationHistoryController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -99,20 +119,145 @@ class HomePage extends StatelessWidget {
             ),
           ),
           const VerticalDivider(width: 1),
-          // Right panel - Settings
+          // Right panel - Tabs (History / Settings)
           Expanded(
-            child: Obx(() {
-              final account = accountsController.selectedAccount.value;
-              final settings = settingsController.settings.value;
+            child: Column(
+              children: [
+                TabBar(
+                  controller: _tabController,
+                  tabs: [
+                    Obx(() => Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('History'),
+                              if (historyController.unreadCount.value > 0) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${historyController.unreadCount.value}',
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        )),
+                    const Tab(text: 'Settings'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // History tab
+                      _buildHistoryPanel(context, historyController),
+                      // Settings tab
+                      Obx(() {
+                        final account = accountsController.selectedAccount.value;
+                        final settings = settingsController.settings.value;
 
-              if (account == null || settings == null) {
-                return const Center(
-                  child: Text('Select an account to configure notifications'),
+                        if (account == null || settings == null) {
+                          return const Center(
+                            child: Text('Select an account to configure notifications'),
+                          );
+                        }
+
+                        return _buildSettingsPanel(context, account, settings, settingsController);
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryPanel(BuildContext context, NotificationHistoryController controller) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () => controller.markAllAsRead(),
+                icon: const Icon(Icons.done_all, size: 18),
+                label: const Text('Mark all read'),
+              ),
+              TextButton.icon(
+                onPressed: () => _confirmClearHistory(context, controller),
+                icon: const Icon(Icons.delete_sweep, size: 18),
+                label: const Text('Clear'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (controller.notifications.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.notifications_off, size: 48, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text('No notifications yet'),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: controller.notifications.length,
+              itemBuilder: (context, index) {
+                final notification = controller.notifications[index];
+                return NotificationTile(
+                  notification: notification,
+                  onTap: () => controller.markAsRead(notification.id),
+                  onDismiss: () => controller.deleteNotification(notification.id),
                 );
-              }
+              },
+            );
+          }),
+        ),
+      ],
+    );
+  }
 
-              return _buildSettingsPanel(context, account, settings, settingsController);
-            }),
+  void _confirmClearHistory(BuildContext context, NotificationHistoryController controller) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear history?'),
+        content: const Text('This will delete all notifications.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              controller.clearAll();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Clear'),
           ),
         ],
       ),

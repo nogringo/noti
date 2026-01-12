@@ -10,6 +10,7 @@ class DatabaseService extends GetxService {
 
   final _accountsStore = stringMapStoreFactory.store('accounts');
   final _settingsStore = stringMapStoreFactory.store('notification_settings');
+  final _notificationsStore = stringMapStoreFactory.store('notifications');
 
   Future<DatabaseService> init() async {
     final appDir = await getApplicationSupportDirectory();
@@ -55,5 +56,70 @@ class DatabaseService extends GetxService {
       await saveNotificationSettings(settings);
     }
     return settings;
+  }
+
+  // Notification History
+  Future<void> saveNotification(NotificationHistory notification) async {
+    await _notificationsStore.record(notification.id).put(_db, notification.toJson());
+  }
+
+  Future<List<NotificationHistory>> getNotifications({String? accountId, int? limit}) async {
+    final finder = Finder(
+      sortOrders: [SortOrder('createdAt', false)],
+      limit: limit,
+      filter: accountId != null ? Filter.equals('accountId', accountId) : null,
+    );
+    final records = await _notificationsStore.find(_db, finder: finder);
+    return records.map((r) => NotificationHistory.fromJson(r.value)).toList();
+  }
+
+  Future<void> markNotificationRead(String id) async {
+    final record = await _notificationsStore.record(id).get(_db);
+    if (record != null) {
+      final notification = NotificationHistory.fromJson(record);
+      await _notificationsStore.record(id).put(_db, notification.copyWith(read: true).toJson());
+    }
+  }
+
+  Future<void> markAllNotificationsRead({String? accountId}) async {
+    final finder = Finder(
+      filter: accountId != null
+          ? Filter.and([
+              Filter.equals('accountId', accountId),
+              Filter.equals('read', false),
+            ])
+          : Filter.equals('read', false),
+    );
+    final records = await _notificationsStore.find(_db, finder: finder);
+    for (final record in records) {
+      final notification = NotificationHistory.fromJson(record.value);
+      await _notificationsStore.record(record.key).put(_db, notification.copyWith(read: true).toJson());
+    }
+  }
+
+  Future<void> deleteNotification(String id) async {
+    await _notificationsStore.record(id).delete(_db);
+  }
+
+  Future<void> clearNotifications({String? accountId}) async {
+    if (accountId != null) {
+      final finder = Finder(filter: Filter.equals('accountId', accountId));
+      await _notificationsStore.delete(_db, finder: finder);
+    } else {
+      await _notificationsStore.delete(_db);
+    }
+  }
+
+  Future<int> getUnreadCount({String? accountId}) async {
+    final finder = Finder(
+      filter: accountId != null
+          ? Filter.and([
+              Filter.equals('accountId', accountId),
+              Filter.equals('read', false),
+            ])
+          : Filter.equals('read', false),
+    );
+    final records = await _notificationsStore.find(_db, finder: finder);
+    return records.length;
   }
 }
