@@ -177,6 +177,23 @@ class NostrService extends GetxService {
     return pubkey;
   }
 
+  /// Fetch metadata for a specific pubkey using any available NDK instance
+  Future<({String? name, String? picture})?> fetchMetadataForPubkey(String pubkey) async {
+    if (_ndkInstances.isEmpty) return null;
+
+    final ndk = _ndkInstances.values.first;
+    try {
+      final metadata = await ndk.metadata.loadMetadata(pubkey);
+      if (metadata != null) {
+        return (
+          name: metadata.displayName ?? metadata.name,
+          picture: metadata.picture,
+        );
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> updateSettings(String accountId, NotificationSettings settings) async {
     _settings[accountId] = settings;
   }

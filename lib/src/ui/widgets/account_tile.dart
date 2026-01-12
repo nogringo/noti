@@ -20,10 +20,6 @@ class AccountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shortPubkey = account.pubkey.length > 16
-        ? '${account.pubkey.substring(0, 8)}...${account.pubkey.substring(account.pubkey.length - 8)}'
-        : account.pubkey;
-
     return Card(
       color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
       child: ListTile(
@@ -32,8 +28,7 @@ class AccountTile extends StatelessWidget {
           backgroundImage: account.picture != null ? NetworkImage(account.picture!) : null,
           child: account.picture == null ? const Icon(Icons.person) : null,
         ),
-        title: Text(account.name ?? shortPubkey),
-        subtitle: account.name != null ? Text(shortPubkey) : null,
+        title: Text(account.name ?? 'Nostr Account'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

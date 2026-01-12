@@ -9,6 +9,10 @@ import 'add_account_dialog.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  String _getAccountDisplayName(NotifyAccount account) {
+    return account.name ?? 'Nostr Account';
+  }
+
   @override
   Widget build(BuildContext context) {
     final accountsController = Get.find<AccountsController>();
@@ -124,11 +128,26 @@ class HomePage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundImage: account.picture != null ? NetworkImage(account.picture!) : null,
+              child: account.picture == null ? const Icon(Icons.person) : null,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              _getAccountDisplayName(account),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
         Text(
-          'Notifications for ${account.name ?? account.pubkey.substring(0, 16)}...',
+          'Notifications',
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         Card(
           child: Column(
             children: [
@@ -214,11 +233,12 @@ class HomePage extends StatelessWidget {
   }
 
   void _confirmDeleteAccount(BuildContext context, NotifyAccount account) {
+    final displayName = _getAccountDisplayName(account);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete account?'),
-        content: Text('Remove ${account.name ?? account.pubkey.substring(0, 16)}... from notifications?'),
+        content: Text('Remove $displayName from notifications?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

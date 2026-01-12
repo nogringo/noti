@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../models/models.dart';
@@ -12,10 +14,19 @@ class AccountsController extends GetxController {
   final isLoading = false.obs;
   final error = Rxn<String>();
 
+  Timer? _metadataRefreshTimer;
+  static const _metadataRefreshInterval = Duration(minutes: 5);
+
   @override
   void onInit() {
     super.onInit();
     loadAccounts();
+  }
+
+  @override
+  void onClose() {
+    _metadataRefreshTimer?.cancel();
+    super.onClose();
   }
 
   Future<void> loadAccounts() async {
@@ -33,10 +44,51 @@ class AccountsController extends GetxController {
       if (accounts.isNotEmpty && selectedAccount.value == null) {
         selectedAccount.value = accounts.first;
       }
+
+      // Start metadata refresh
+      _startMetadataRefresh();
     } catch (e) {
       error.value = e.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  void _startMetadataRefresh() {
+    // Refresh immediately
+    refreshAllMetadata();
+
+    // Then periodically
+    _metadataRefreshTimer?.cancel();
+    _metadataRefreshTimer = Timer.periodic(_metadataRefreshInterval, (_) {
+      refreshAllMetadata();
+    });
+  }
+
+  Future<void> refreshAllMetadata() async {
+    for (var i = 0; i < accounts.length; i++) {
+      final account = accounts[i];
+      final metadata = await _nostr.fetchMetadataForPubkey(account.pubkey);
+
+      if (metadata != null) {
+        final hasChanges = account.name != metadata.name ||
+                          account.picture != metadata.picture;
+
+        if (hasChanges) {
+          final updated = account.copyWith(
+            name: metadata.name,
+            picture: metadata.picture,
+          );
+
+          await _db.saveAccount(updated);
+          accounts[i] = updated;
+
+          // Update selected account if it's the same
+          if (selectedAccount.value?.id == account.id) {
+            selectedAccount.value = updated;
+          }
+        }
+      }
     }
   }
 

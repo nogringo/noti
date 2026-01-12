@@ -42,6 +42,19 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
       return;
     }
 
+    // Fetch user metadata (name, picture)
+    String? name;
+    String? picture;
+    try {
+      final metadata = await _ndk.metadata.loadMetadata(ndkAccount.pubkey);
+      if (metadata != null) {
+        name = metadata.displayName ?? metadata.name;
+        picture = metadata.picture;
+      }
+    } catch (_) {
+      // Continue without metadata if fetch fails
+    }
+
     // Generate unique ID
     final id = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -58,6 +71,8 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
       bunkerUrl: '',
       relays: relays,
       active: true,
+      name: name,
+      picture: picture,
     );
 
     // Create default notification settings
