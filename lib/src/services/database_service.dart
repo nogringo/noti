@@ -11,6 +11,7 @@ class DatabaseService extends GetxService {
   final _accountsStore = stringMapStoreFactory.store('accounts');
   final _settingsStore = stringMapStoreFactory.store('notification_settings');
   final _notificationsStore = stringMapStoreFactory.store('notifications');
+  final _processedEventsStore = stringMapStoreFactory.store('processed_events');
 
   Future<DatabaseService> init() async {
     final appDir = await getApplicationSupportDirectory();
@@ -121,5 +122,23 @@ class DatabaseService extends GetxService {
     );
     final records = await _notificationsStore.find(_db, finder: finder);
     return records.length;
+  }
+
+  // Processed Events (to avoid duplicate notifications)
+  Future<bool> isEventProcessed(String eventId) async {
+    final record = await _processedEventsStore.record(eventId).get(_db);
+    return record != null;
+  }
+
+  Future<void> markEventProcessed(String eventId) async {
+    await _processedEventsStore.record(eventId).put(_db, {
+      'processedAt': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<void> cleanOldProcessedEvents({int maxAgeDays = 7}) async {
+    final cutoff = DateTime.now().subtract(Duration(days: maxAgeDays)).millisecondsSinceEpoch;
+    final finder = Finder(filter: Filter.lessThan('processedAt', cutoff));
+    await _processedEventsStore.delete(_db, finder: finder);
   }
 }

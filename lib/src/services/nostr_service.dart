@@ -5,12 +5,14 @@ import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
 
 import '../models/models.dart';
+import 'database_service.dart';
 import 'notification_service.dart';
 import 'tray_service.dart';
 
 class NostrService extends GetxService {
   final NotificationService _notificationService = Get.find();
   final TrayService _trayService = Get.find();
+  final DatabaseService _db = Get.find();
 
   final Map<String, Ndk> _ndkInstances = {};
   final Map<String, StreamSubscription> _subscriptions = {};
@@ -26,6 +28,8 @@ class NostrService extends GetxService {
   static const int kindZapReceipt = 9735;
 
   Future<NostrService> init() async {
+    // Clean old processed events on startup
+    await _db.cleanOldProcessedEvents();
     return this;
   }
 
@@ -114,10 +118,13 @@ class NostrService extends GetxService {
       dev.log('[NostrService] DM relays (kind 10050): $dmRelays');
     }
 
+    // NIP-17: gift wrap created_at can be randomized up to 2 days in the past
+    final dmSince = since - (2 * 24 * 60 * 60); // 2 days before
+
     final dmFilter = Filter(
       kinds: [kindGiftWrap], // NIP-17 uses gift wraps (kind 1059)
       pTags: [account.pubkey],
-      since: since,
+      since: dmSince,
     );
 
     final dmResponse = ndk.requests.subscription(
@@ -160,7 +167,7 @@ class NostrService extends GetxService {
     return [];
   }
 
-  void _handleEvent(NotifyAccount account, Nip01Event event) {
+  Future<void> _handleEvent(NotifyAccount account, Nip01Event event) async {
     if (_trayService.isPaused) {
       dev.log('[NostrService] Event ignored: notifications paused');
       return;
@@ -177,6 +184,15 @@ class NostrService extends GetxService {
       dev.log('[NostrService] Event ignored: own event');
       return;
     }
+
+    // Check if event was already processed
+    if (await _db.isEventProcessed(event.id)) {
+      dev.log('[NostrService] Event ignored: already processed');
+      return;
+    }
+
+    // Mark as processed
+    await _db.markEventProcessed(event.id);
 
     final fromName = _shortenPubkey(event.pubKey);
 
