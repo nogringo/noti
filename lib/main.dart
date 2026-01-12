@@ -1,0 +1,56 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:window_manager/window_manager.dart';
+
+import 'app.dart';
+import 'src/services/services.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize window manager for Linux desktop
+  await windowManager.ensureInitialized();
+
+  const windowOptions = WindowOptions(
+    size: Size(800, 600),
+    minimumSize: Size(600, 400),
+    center: true,
+    title: 'Nostr Notifications',
+  );
+
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
+  // Initialize services
+  await _initServices();
+
+  runApp(const NostrNotifyApp());
+}
+
+Future<void> _initServices() async {
+  // Database first
+  await Get.putAsync(() => DatabaseService().init());
+
+  // Notifications
+  await Get.putAsync(() => NotificationService().init());
+
+  // Tray
+  final trayService = await Get.putAsync(() => TrayService().init());
+
+  // Configure tray callbacks
+  trayService.onOpenRequested = () async {
+    await windowManager.show();
+    await windowManager.focus();
+  };
+
+  trayService.onQuitRequested = () {
+    exit(0);
+  };
+
+  // Nostr service
+  await Get.putAsync(() => NostrService().init());
+}
