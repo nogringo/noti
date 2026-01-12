@@ -6,6 +6,7 @@ import 'package:ndk/ndk.dart';
 
 import '../models/models.dart';
 import 'database_service.dart';
+import 'ndk_service.dart';
 import 'notification_service.dart';
 import 'tray_service.dart';
 
@@ -13,8 +14,8 @@ class NostrService extends GetxService {
   final NotificationService _notificationService = Get.find();
   final TrayService _trayService = Get.find();
   final DatabaseService _db = Get.find();
+  final NdkService _ndkService = Get.find();
 
-  final Map<String, Ndk> _ndkInstances = {};
   final Map<String, StreamSubscription> _subscriptions = {};
   final Map<String, StreamSubscription> _dmSubscriptions = {};
   final Map<String, NotificationSettings> _settings = {};
@@ -35,20 +36,9 @@ class NostrService extends GetxService {
 
   Future<String?> connectAccount(NotifyAccount account, NotificationSettings settings) async {
     try {
-      // Create NDK instance
-      // Note: NIP-46 signer setup depends on NDK version
-      // For now, we'll use a basic setup - adjust based on actual NDK API
-      final ndk = Ndk(
-        NdkConfig(
-          eventVerifier: Bip340EventVerifier(),
-          cache: MemCacheManager(),
-        ),
-      );
-
-      _ndkInstances[account.id] = ndk;
       _settings[account.id] = settings;
 
-      // Start subscriptions
+      // Start subscriptions using shared NDK (with signer for AUTH)
       await _subscribeToEvents(account);
 
       return null; // Success
@@ -58,9 +48,9 @@ class NostrService extends GetxService {
   }
 
   Future<void> _subscribeToEvents(NotifyAccount account) async {
-    final ndk = _ndkInstances[account.id];
+    final ndk = _ndkService.ndk;
     final settings = _settings[account.id];
-    if (ndk == null || settings == null) return;
+    if (settings == null) return;
 
     final since = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     dev.log('[NostrService] Subscribing for account ${account.id}, relays: ${account.relays}');
@@ -279,11 +269,9 @@ class NostrService extends GetxService {
     return pubkey;
   }
 
-  /// Fetch metadata for a specific pubkey using any available NDK instance
+  /// Fetch metadata for a specific pubkey
   Future<({String? name, String? picture})?> fetchMetadataForPubkey(String pubkey) async {
-    if (_ndkInstances.isEmpty) return null;
-
-    final ndk = _ndkInstances.values.first;
+    final ndk = _ndkService.ndk;
     try {
       final metadata = await ndk.metadata.loadMetadata(pubkey);
       if (metadata != null) {
@@ -296,11 +284,9 @@ class NostrService extends GetxService {
     return null;
   }
 
-  /// Fetch relay list for a specific pubkey using any available NDK instance
+  /// Fetch relay list for a specific pubkey
   Future<List<String>?> fetchRelaysForPubkey(String pubkey) async {
-    if (_ndkInstances.isEmpty) return null;
-
-    final ndk = _ndkInstances.values.first;
+    final ndk = _ndkService.ndk;
     try {
       final userRelayList = await ndk.userRelayLists.getSingleUserRelayList(pubkey);
       if (userRelayList != null && userRelayList.urls.isNotEmpty) {
@@ -319,12 +305,11 @@ class NostrService extends GetxService {
     _subscriptions.remove(accountId);
     await _dmSubscriptions[accountId]?.cancel();
     _dmSubscriptions.remove(accountId);
-    _ndkInstances.remove(accountId);
     _settings.remove(accountId);
   }
 
   Future<void> disconnectAll() async {
-    for (final id in _ndkInstances.keys.toList()) {
+    for (final id in _settings.keys.toList()) {
       await disconnectAccount(id);
     }
   }

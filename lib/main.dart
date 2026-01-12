@@ -51,6 +51,9 @@ Future<void> _initServices() async {
     exit(0);
   };
 
+  // NDK service (shared instance with signer)
+  await Get.putAsync(() => NdkService().init());
+
   // Nostr service
   await Get.putAsync(() => NostrService().init());
 }

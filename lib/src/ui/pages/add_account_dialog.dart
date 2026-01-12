@@ -15,16 +15,9 @@ class AddAccountDialog extends StatefulWidget {
 }
 
 class _AddAccountDialogState extends State<AddAccountDialog> {
-  late Ndk _ndk;
+  final NdkService _ndkService = Get.find();
 
-  @override
-  void initState() {
-    super.initState();
-    _ndk = Ndk(NdkConfig(
-      eventVerifier: Bip340EventVerifier(),
-      cache: MemCacheManager(),
-    ));
-  }
+  Ndk get _ndk => _ndkService.ndk;
 
   Future<void> _onLoggedIn() async {
     final ndkAccount = _ndk.accounts.getLoggedAccount();
@@ -94,6 +87,9 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
     // Save to database
     await dbService.saveAccount(account);
     await dbService.saveNotificationSettings(settings);
+
+    // Save NDK account state (preserves signer for AUTH)
+    await _ndkService.saveAccountState();
 
     // Update controller state
     accountsController.accounts.add(account);
