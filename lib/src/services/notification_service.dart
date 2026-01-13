@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../controllers/notification_history_controller.dart';
 import '../models/models.dart';
@@ -29,8 +30,13 @@ class NotificationService extends GetxService {
     return this;
   }
 
-  void _onNotificationTap(NotificationResponse response) {
-    // Handle notification tap - could open the app or specific conversation
+  Future<void> _onNotificationTap(NotificationResponse response) async {
+    // Show and focus the app window
+    // Use setAlwaysOnTop trick to bypass Linux focus stealing prevention
+    await windowManager.show();
+    await windowManager.setAlwaysOnTop(true);
+    await windowManager.setAlwaysOnTop(false);
+    await windowManager.focus();
   }
 
   Future<void> _saveAndNotifyHistory(NotificationHistory notification) async {
