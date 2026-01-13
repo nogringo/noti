@@ -1,0 +1,241 @@
+{
+  "@@locale": "en",
+  "appTitle": "Nostr Notifications",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "accounts": "Accounts",
+  "@accounts": {
+    "description": "Accounts section title"
+  },
+  "addAccount": "Add account",
+  "@addAccount": {
+    "description": "Add account button"
+  },
+  "noAccounts": "No accounts",
+  "@noAccounts": {
+    "description": "Message when no accounts are configured"
+  },
+  "history": "History",
+  "@history": {
+    "description": "History tab title"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings tab title"
+  },
+  "markAllRead": "Mark all read",
+  "@markAllRead": {
+    "description": "Mark all notifications as read button"
+  },
+  "clear": "Clear",
+  "@clear": {
+    "description": "Clear button"
+  },
+  "noNotificationsYet": "No notifications yet",
+  "@noNotificationsYet": {
+    "description": "Message when no notifications"
+  },
+  "clearHistoryTitle": "Clear history?",
+  "@clearHistoryTitle": {
+    "description": "Clear history dialog title"
+  },
+  "clearHistoryContent": "This will delete all notifications.",
+  "@clearHistoryContent": {
+    "description": "Clear history dialog content"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button"
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications section title"
+  },
+  "directMessages": "Direct Messages",
+  "@directMessages": {
+    "description": "Direct messages toggle title"
+  },
+  "directMessagesDesc": "NIP-17 encrypted DMs",
+  "@directMessagesDesc": {
+    "description": "Direct messages toggle description"
+  },
+  "mentions": "Mentions",
+  "@mentions": {
+    "description": "Mentions toggle title"
+  },
+  "mentionsDesc": "When someone mentions you in a note",
+  "@mentionsDesc": {
+    "description": "Mentions toggle description"
+  },
+  "zaps": "Zaps",
+  "@zaps": {
+    "description": "Zaps toggle title"
+  },
+  "zapsDesc": "Lightning payments received",
+  "@zapsDesc": {
+    "description": "Zaps toggle description"
+  },
+  "reposts": "Reposts",
+  "@reposts": {
+    "description": "Reposts toggle title"
+  },
+  "repostsDesc": "When someone reposts your notes",
+  "@repostsDesc": {
+    "description": "Reposts toggle description"
+  },
+  "reactions": "Reactions",
+  "@reactions": {
+    "description": "Reactions toggle title"
+  },
+  "reactionsDesc": "Likes and other reactions",
+  "@reactionsDesc": {
+    "description": "Reactions toggle description"
+  },
+  "application": "Application",
+  "@application": {
+    "description": "Application section title"
+  },
+  "launchAtStartup": "Launch at startup",
+  "@launchAtStartup": {
+    "description": "Launch at startup toggle title"
+  },
+  "launchAtStartupDesc": "Start automatically when you log in",
+  "@launchAtStartupDesc": {
+    "description": "Launch at startup toggle description"
+  },
+  "startMinimized": "Start minimized",
+  "@startMinimized": {
+    "description": "Start minimized toggle title"
+  },
+  "startMinimizedDesc": "Start in the system tray",
+  "@startMinimizedDesc": {
+    "description": "Start minimized toggle description"
+  },
+  "deleteAccountTitle": "Delete account?",
+  "@deleteAccountTitle": {
+    "description": "Delete account dialog title"
+  },
+  "deleteAccountContent": "Remove {name} from notifications?",
+  "@deleteAccountContent": {
+    "description": "Delete account dialog content",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "npub1..."
+      }
+    }
+  },
+  "minimizeToTray": "Minimize to tray",
+  "@minimizeToTray": {
+    "description": "Minimize to tray tooltip"
+  },
+  "trayOpen": "Open",
+  "@trayOpen": {
+    "description": "Tray menu open item"
+  },
+  "trayQuit": "Quit",
+  "@trayQuit": {
+    "description": "Tray menu quit item"
+  },
+  "dmFrom": "DM from {name}",
+  "@dmFrom": {
+    "description": "DM notification title",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alice"
+      }
+    }
+  },
+  "newDm": "New DM",
+  "@newDm": {
+    "description": "New DM notification title when sender unknown"
+  },
+  "newDmBody": "You received a new message",
+  "@newDmBody": {
+    "description": "New DM notification body"
+  },
+  "mention": "Mention",
+  "@mention": {
+    "description": "Mention notification title"
+  },
+  "mentionBody": "{name} mentioned you",
+  "@mentionBody": {
+    "description": "Mention notification body",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alice"
+      }
+    }
+  },
+  "zapReceived": "Zap received",
+  "@zapReceived": {
+    "description": "Zap notification title"
+  },
+  "zapBody": "{name} zapped you {amount} sats",
+  "@zapBody": {
+    "description": "Zap notification body with amount",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alice"
+      },
+      "amount": {
+        "type": "int",
+        "example": "1000"
+      }
+    }
+  },
+  "zapBodyNoAmount": "{name} zapped you",
+  "@zapBodyNoAmount": {
+    "description": "Zap notification body without amount",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alice"
+      }
+    }
+  },
+  "repost": "Repost",
+  "@repost": {
+    "description": "Repost notification title"
+  },
+  "repostBody": "{name} reposted your note",
+  "@repostBody": {
+    "description": "Repost notification body",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alice"
+      }
+    }
+  },
+  "reaction": "Reaction",
+  "@reaction": {
+    "description": "Reaction notification title"
+  },
+  "reactionBody": "{name} reacted {emoji}",
+  "@reactionBody": {
+    "description": "Reaction notification body",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alice"
+      },
+      "emoji": {
+        "type": "String",
+        "example": "❤️"
+      }
+    }
+  },
+  "selectAccountToConfig": "Select an account to configure notifications",
+  "@selectAccountToConfig": {
+    "description": "Message shown when no account is selected"
+  }
+}

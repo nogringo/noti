@@ -22,7 +22,14 @@ class TrayService extends GetxService with TrayListener {
     }
     // In release mode, the icon is in data/flutter_assets/
     final exeDir = path.dirname(Platform.resolvedExecutable);
-    return path.join(exeDir, 'data', 'flutter_assets', 'assets', 'icons', 'app_icon.png');
+    return path.join(
+      exeDir,
+      'data',
+      'flutter_assets',
+      'assets',
+      'icons',
+      'app_icon.png',
+    );
   }
 
   Future<TrayService> init() async {

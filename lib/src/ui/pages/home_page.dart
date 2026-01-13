@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../controllers/controllers.dart';
 import '../../models/models.dart';
 import '../widgets/widgets.dart';
@@ -40,17 +41,18 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final accountsController = Get.find<AccountsController>();
     final settingsController = Get.find<SettingsController>();
     final historyController = Get.find<NotificationHistoryController>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nostr Notifications'),
+        title: Text(l.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.minimize),
-            tooltip: 'Minimize to tray',
+            tooltip: l.minimizeToTray,
             onPressed: () => windowManager.hide(),
           ),
         ],
@@ -69,12 +71,12 @@ class _HomePageState extends State<HomePage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Accounts',
+                        l.accounts,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       IconButton(
                         icon: const Icon(Icons.add),
-                        tooltip: 'Add account',
+                        tooltip: l.addAccount,
                         onPressed: () => _showAddAccountDialog(context),
                       ),
                     ],
@@ -91,12 +93,12 @@ class _HomePageState extends State<HomePage>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text('No accounts'),
+                            Text(l.noAccounts),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () => _showAddAccountDialog(context),
                               icon: const Icon(Icons.add),
-                              label: const Text('Add account'),
+                              label: Text(l.addAccount),
                             ),
                           ],
                         ),
@@ -149,7 +151,7 @@ class _HomePageState extends State<HomePage>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('History'),
+                            Text(l.history),
                             if (historyController.unreadCount.value > 0) ...[
                               const SizedBox(width: 8),
                               Container(
@@ -176,7 +178,7 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                     ),
-                    const Tab(text: 'Settings'),
+                    Tab(text: l.settings),
                   ],
                 ),
                 Expanded(
@@ -184,7 +186,7 @@ class _HomePageState extends State<HomePage>
                     controller: _tabController,
                     children: [
                       // History tab
-                      _buildHistoryPanel(context, historyController),
+                      _buildHistoryPanel(context, l, historyController),
                       // Settings tab
                       Obx(() {
                         final account =
@@ -192,15 +194,12 @@ class _HomePageState extends State<HomePage>
                         final settings = settingsController.settings.value;
 
                         if (account == null || settings == null) {
-                          return const Center(
-                            child: Text(
-                              'Select an account to configure notifications',
-                            ),
-                          );
+                          return Center(child: Text(l.selectAccountToConfig));
                         }
 
                         return _buildSettingsPanel(
                           context,
+                          l,
                           account,
                           settings,
                           settingsController,
@@ -219,6 +218,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHistoryPanel(
     BuildContext context,
+    AppLocalizations l,
     NotificationHistoryController controller,
   ) {
     return Column(
@@ -231,12 +231,12 @@ class _HomePageState extends State<HomePage>
               TextButton.icon(
                 onPressed: () => controller.markAllAsRead(),
                 icon: const Icon(Icons.done_all, size: 18),
-                label: const Text('Mark all read'),
+                label: Text(l.markAllRead),
               ),
               TextButton.icon(
-                onPressed: () => _confirmClearHistory(context, controller),
+                onPressed: () => _confirmClearHistory(context, l, controller),
                 icon: const Icon(Icons.delete_sweep, size: 18),
-                label: const Text('Clear'),
+                label: Text(l.clear),
               ),
             ],
           ),
@@ -248,13 +248,17 @@ class _HomePageState extends State<HomePage>
             }
 
             if (controller.notifications.isEmpty) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.notifications_off, size: 48, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text('No notifications yet'),
+                    const Icon(
+                      Icons.notifications_off,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(l.noNotificationsYet),
                   ],
                 ),
               );
@@ -280,24 +284,25 @@ class _HomePageState extends State<HomePage>
 
   void _confirmClearHistory(
     BuildContext context,
+    AppLocalizations l,
     NotificationHistoryController controller,
   ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear history?'),
-        content: const Text('This will delete all notifications.'),
+        title: Text(l.clearHistoryTitle),
+        content: Text(l.clearHistoryContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           TextButton(
             onPressed: () {
               controller.clearAll();
               Navigator.of(context).pop();
             },
-            child: const Text('Clear'),
+            child: Text(l.clear),
           ),
         ],
       ),
@@ -306,6 +311,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildSettingsPanel(
     BuildContext context,
+    AppLocalizations l,
     Account account,
     NotificationSettings settings,
     SettingsController controller,
@@ -333,46 +339,46 @@ class _HomePageState extends State<HomePage>
           ],
         ),
         const SizedBox(height: 24),
-        Text('Notifications', style: Theme.of(context).textTheme.titleMedium),
+        Text(l.notifications, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Card(
           child: Column(
             children: [
               NotificationToggle(
-                title: 'Direct Messages',
-                subtitle: 'NIP-17 encrypted DMs',
+                title: l.directMessages,
+                subtitle: l.directMessagesDesc,
                 icon: Icons.mail,
                 value: settings.dm,
                 onChanged: (_) => controller.toggleDm(),
               ),
               const Divider(height: 1),
               NotificationToggle(
-                title: 'Mentions',
-                subtitle: 'When someone mentions you in a note',
+                title: l.mentions,
+                subtitle: l.mentionsDesc,
                 icon: Icons.alternate_email,
                 value: settings.mention,
                 onChanged: (_) => controller.toggleMention(),
               ),
               const Divider(height: 1),
               NotificationToggle(
-                title: 'Zaps',
-                subtitle: 'Lightning payments received',
+                title: l.zaps,
+                subtitle: l.zapsDesc,
                 icon: Icons.bolt,
                 value: settings.zap,
                 onChanged: (_) => controller.toggleZap(),
               ),
               const Divider(height: 1),
               NotificationToggle(
-                title: 'Reposts',
-                subtitle: 'When someone reposts your notes',
+                title: l.reposts,
+                subtitle: l.repostsDesc,
                 icon: Icons.repeat,
                 value: settings.repost,
                 onChanged: (_) => controller.toggleRepost(),
               ),
               const Divider(height: 1),
               NotificationToggle(
-                title: 'Reactions',
-                subtitle: 'Likes and other reactions',
+                title: l.reactions,
+                subtitle: l.reactionsDesc,
                 icon: Icons.favorite,
                 value: settings.reaction,
                 onChanged: (_) => controller.toggleReaction(),
@@ -381,15 +387,15 @@ class _HomePageState extends State<HomePage>
           ),
         ),
         const SizedBox(height: 24),
-        Text('Application', style: Theme.of(context).textTheme.titleMedium),
+        Text(l.application, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Obx(
           () => Card(
             child: Column(
               children: [
                 NotificationToggle(
-                  title: 'Launch at startup',
-                  subtitle: 'Start automatically when you log in',
+                  title: l.launchAtStartup,
+                  subtitle: l.launchAtStartupDesc,
                   icon: Icons.power_settings_new,
                   value: appSettingsController.settings.value.launchAtStartup,
                   onChanged: (_) =>
@@ -397,8 +403,8 @@ class _HomePageState extends State<HomePage>
                 ),
                 const Divider(height: 1),
                 NotificationToggle(
-                  title: 'Start minimized',
-                  subtitle: 'Start in the system tray',
+                  title: l.startMinimized,
+                  subtitle: l.startMinimizedDesc,
                   icon: Icons.visibility_off,
                   value: appSettingsController.settings.value.startMinimized,
                   onChanged: (_) =>
@@ -420,23 +426,24 @@ class _HomePageState extends State<HomePage>
   }
 
   void _confirmDeleteAccount(BuildContext context, Account account) {
+    final l = AppLocalizations.of(context)!;
     final displayName = _shortenPubkey(account.pubkey);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: Text('Remove $displayName from notifications?'),
+        title: Text(l.deleteAccountTitle),
+        content: Text(l.deleteAccountContent(displayName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           TextButton(
             onPressed: () {
               Get.find<AccountsController>().removeAccount(account.pubkey);
               Navigator.of(context).pop();
             },
-            child: const Text('Delete'),
+            child: Text(l.delete),
           ),
         ],
       ),

@@ -35,6 +35,7 @@ dependencies:
   launch_at_startup: ^0.5.1
   package_info_plus: ^9.0.0
   system_theme: ^3.2.0
+  intl: any
 
 dev_dependencies:
   flutter_test:
@@ -44,6 +45,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/icons/
