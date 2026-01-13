@@ -1,10 +1,4 @@
-enum NotificationType {
-  dm,
-  mention,
-  zap,
-  repost,
-  reaction,
-}
+enum NotificationType { dm, mention, zap, repost, reaction }
 
 class NotificationHistory {
   final String id;
@@ -34,18 +28,18 @@ class NotificationHistory {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'accountId': accountId,
-        'type': type.name,
-        'title': title,
-        'body': body,
-        'fromPubkey': fromPubkey,
-        'eventId': eventId,
-        'zapAmount': zapAmount,
-        'reaction': reaction,
-        'createdAt': createdAt.millisecondsSinceEpoch,
-        'read': read,
-      };
+    'id': id,
+    'accountId': accountId,
+    'type': type.name,
+    'title': title,
+    'body': body,
+    'fromPubkey': fromPubkey,
+    'eventId': eventId,
+    'zapAmount': zapAmount,
+    'reaction': reaction,
+    'createdAt': createdAt.millisecondsSinceEpoch,
+    'read': read,
+  };
 
   factory NotificationHistory.fromJson(Map<String, dynamic> json) {
     return NotificationHistory(

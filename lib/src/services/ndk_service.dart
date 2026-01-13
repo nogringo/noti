@@ -8,10 +8,9 @@ class NdkService extends GetxService {
   Ndk get ndk => _ndk;
 
   Future<NdkService> init() async {
-    _ndk = Ndk(NdkConfig(
-      eventVerifier: Bip340EventVerifier(),
-      cache: MemCacheManager(),
-    ));
+    _ndk = Ndk(
+      NdkConfig(eventVerifier: Bip340EventVerifier(), cache: MemCacheManager()),
+    );
 
     // Restore accounts from local storage (includes signers)
     await nRestoreAccounts(_ndk);

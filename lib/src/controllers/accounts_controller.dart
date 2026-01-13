@@ -1,21 +1,20 @@
-import 'dart:async';
-
 import 'package:get/get.dart';
+import 'package:ndk/ndk.dart';
 
-import '../models/models.dart';
 import '../services/services.dart';
 
 class AccountsController extends GetxController {
   final DatabaseService _db = Get.find();
   final NostrService _nostr = Get.find();
+  final NdkService _ndkService = Get.find();
 
-  final accounts = <NotifyAccount>[].obs;
-  final selectedAccount = Rxn<NotifyAccount>();
+  final accounts = <Account>[].obs;
+  final selectedAccount = Rxn<Account>();
   final isLoading = false.obs;
   final error = Rxn<String>();
 
-  Timer? _metadataRefreshTimer;
-  static const _metadataRefreshInterval = Duration(minutes: 5);
+  // Metadata cache: pubkey -> (name, picture)
+  final metadata = <String, ({String? name, String? picture})>{}.obs;
 
   @override
   void onInit() {
@@ -23,30 +22,27 @@ class AccountsController extends GetxController {
     loadAccounts();
   }
 
-  @override
-  void onClose() {
-    _metadataRefreshTimer?.cancel();
-    super.onClose();
-  }
-
   Future<void> loadAccounts() async {
     isLoading.value = true;
     try {
-      final loadedAccounts = await _db.getAccounts();
-      accounts.assignAll(loadedAccounts);
+      final ndk = _ndkService.ndk;
+      final ndkAccounts = ndk.accounts.accounts.values.toList();
+      accounts.assignAll(ndkAccounts);
 
-      // Connect all active accounts
-      for (final account in loadedAccounts.where((a) => a.active)) {
-        final settings = await _db.getOrCreateNotificationSettings(account.id);
-        await _nostr.connectAccount(account, settings);
+      // Connect all accounts for notifications
+      for (final account in ndkAccounts) {
+        final settings = await _db.getOrCreateNotificationSettings(
+          account.pubkey,
+        );
+        await _nostr.connectAccountFromNdk(account, settings);
       }
 
       if (accounts.isNotEmpty && selectedAccount.value == null) {
         selectedAccount.value = accounts.first;
       }
 
-      // Start metadata refresh
-      _startMetadataRefresh();
+      // Load metadata for all accounts
+      _loadAllMetadata();
     } catch (e) {
       error.value = e.toString();
     } finally {
@@ -54,180 +50,40 @@ class AccountsController extends GetxController {
     }
   }
 
-  void _startMetadataRefresh() {
-    // Refresh immediately
-    refreshAllMetadata();
-
-    // Then periodically
-    _metadataRefreshTimer?.cancel();
-    _metadataRefreshTimer = Timer.periodic(_metadataRefreshInterval, (_) {
-      refreshAllMetadata();
-    });
-  }
-
-  Future<void> refreshAllMetadata() async {
-    for (var i = 0; i < accounts.length; i++) {
-      final account = accounts[i];
-
-      // Fetch metadata
-      final metadata = await _nostr.fetchMetadataForPubkey(account.pubkey);
-
-      // Fetch relays
-      final relays = await _nostr.fetchRelaysForPubkey(account.pubkey);
-
-      String? newName = metadata?.name;
-      String? newPicture = metadata?.picture;
-      List<String>? newRelays = relays;
-
-      final hasChanges = account.name != newName ||
-                        account.picture != newPicture ||
-                        (newRelays != null && !_listEquals(account.relays, newRelays));
-
-      if (hasChanges) {
-        final updated = account.copyWith(
-          name: newName,
-          picture: newPicture,
-          relays: newRelays ?? account.relays,
-        );
-
-        await _db.saveAccount(updated);
-        accounts[i] = updated;
-
-        // Reconnect with new relays if they changed
-        if (newRelays != null && !_listEquals(account.relays, newRelays) && updated.active) {
-          await _nostr.disconnectAccount(account.id);
-          final settings = await _db.getOrCreateNotificationSettings(account.id);
-          await _nostr.connectAccount(updated, settings);
+  Future<void> _loadAllMetadata() async {
+    final ndk = _ndkService.ndk;
+    for (final account in accounts) {
+      try {
+        final meta = await ndk.metadata.loadMetadata(account.pubkey);
+        if (meta != null) {
+          metadata[account.pubkey] = (
+            name: meta.displayName ?? meta.name,
+            picture: meta.picture,
+          );
         }
-
-        // Update selected account if it's the same
-        if (selectedAccount.value?.id == account.id) {
-          selectedAccount.value = updated;
-        }
+      } catch (_) {
+        // Ignore metadata fetch errors
       }
     }
   }
 
-  bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
+  String? getAccountName(String pubkey) => metadata[pubkey]?.name;
+  String? getAccountPicture(String pubkey) => metadata[pubkey]?.picture;
 
-  Future<String?> addAccount(String bunkerUrl) async {
-    isLoading.value = true;
-    error.value = null;
+  Future<void> removeAccount(String pubkey) async {
+    final ndk = _ndkService.ndk;
+    await _nostr.disconnectAccount(pubkey);
+    ndk.accounts.removeAccount(pubkey: pubkey);
+    await _ndkService.saveAccountState();
+    accounts.removeWhere((a) => a.pubkey == pubkey);
+    metadata.remove(pubkey);
 
-    try {
-      // Generate unique ID
-      final id = DateTime.now().millisecondsSinceEpoch.toString();
-
-      // Parse pubkey from bunker URL
-      final pubkey = _parsePubkeyFromBunkerUrl(bunkerUrl);
-      if (pubkey == null) {
-        return 'Invalid bunker URL';
-      }
-
-      // Default relays
-      final relays = [
-        'wss://relay.damus.io',
-        'wss://relay.nostr.band',
-        'wss://nos.lol',
-      ];
-
-      final account = NotifyAccount(
-        id: id,
-        pubkey: pubkey,
-        bunkerUrl: bunkerUrl,
-        relays: relays,
-        active: true,
-      );
-
-      // Create default notification settings
-      final settings = NotificationSettings(accountId: id);
-
-      // Try to connect
-      final connectError = await _nostr.connectAccount(account, settings);
-      if (connectError != null) {
-        return connectError;
-      }
-
-      // Save to database
-      await _db.saveAccount(account);
-      await _db.saveNotificationSettings(settings);
-
-      // Update local state
-      accounts.add(account);
-      selectedAccount.value = account;
-
-      return null; // Success
-    } catch (e) {
-      return e.toString();
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  String? _parsePubkeyFromBunkerUrl(String url) {
-    // bunker://<remote-signer-pubkey>?relay=...
-    try {
-      final uri = Uri.parse(url);
-      if (uri.scheme == 'bunker' && uri.host.isNotEmpty) {
-        return uri.host;
-      }
-    } catch (_) {}
-    return null;
-  }
-
-  Future<void> removeAccount(String id) async {
-    await _nostr.disconnectAccount(id);
-    await _db.deleteAccount(id);
-    accounts.removeWhere((a) => a.id == id);
-
-    if (selectedAccount.value?.id == id) {
+    if (selectedAccount.value?.pubkey == pubkey) {
       selectedAccount.value = accounts.isNotEmpty ? accounts.first : null;
     }
   }
 
-  Future<void> toggleAccountActive(String id) async {
-    final index = accounts.indexWhere((a) => a.id == id);
-    if (index == -1) return;
-
-    final account = accounts[index];
-    final updated = account.copyWith(active: !account.active);
-
-    await _db.saveAccount(updated);
-    accounts[index] = updated;
-
-    if (updated.active) {
-      final settings = await _db.getOrCreateNotificationSettings(id);
-      await _nostr.connectAccount(updated, settings);
-    } else {
-      await _nostr.disconnectAccount(id);
-    }
-  }
-
-  Future<void> updateAccountRelays(String id, List<String> relays) async {
-    final index = accounts.indexWhere((a) => a.id == id);
-    if (index == -1) return;
-
-    final account = accounts[index];
-    final updated = account.copyWith(relays: relays);
-
-    await _db.saveAccount(updated);
-    accounts[index] = updated;
-
-    // Reconnect with new relays
-    if (updated.active) {
-      await _nostr.disconnectAccount(id);
-      final settings = await _db.getOrCreateNotificationSettings(id);
-      await _nostr.connectAccount(updated, settings);
-    }
-  }
-
-  void selectAccount(NotifyAccount account) {
+  void selectAccount(Account account) {
     selectedAccount.value = account;
   }
 }

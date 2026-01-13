@@ -6,7 +6,8 @@ import '../models/models.dart';
 import 'database_service.dart';
 
 class NotificationService extends GetxService {
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
   late final DatabaseService _db;
   NotificationHistoryController? _historyController;
 
@@ -70,9 +71,11 @@ class NotificationService extends GetxService {
   Future<void> showDmNotification({
     required String accountId,
     required String fromPubkey,
+    String? fromName,
+    String? preview,
   }) async {
-    const title = 'New DM';
-    const body = 'You received a new message';
+    final title = fromName != null ? 'DM from $fromName' : 'New DM';
+    final body = preview ?? 'You received a new message';
 
     final notification = NotificationHistory(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -107,7 +110,11 @@ class NotificationService extends GetxService {
     );
 
     await _saveAndNotifyHistory(notification);
-    await showNotification(title: title, body: body, payload: 'mention:$eventId');
+    await showNotification(
+      title: title,
+      body: body,
+      payload: 'mention:$eventId',
+    );
   }
 
   Future<void> showZapNotification({

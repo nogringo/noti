@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:ndk/ndk.dart';
 
 import '../models/models.dart';
 import '../services/services.dart';
@@ -18,17 +19,17 @@ class SettingsController extends GetxController {
     ever(_accounts.selectedAccount, _onAccountChanged);
   }
 
-  Future<void> _onAccountChanged(NotifyAccount? account) async {
+  Future<void> _onAccountChanged(Account? account) async {
     if (account == null) {
       settings.value = null;
       return;
     }
 
-    settings.value = await _db.getOrCreateNotificationSettings(account.id);
+    settings.value = await _db.getOrCreateNotificationSettings(account.pubkey);
   }
 
-  Future<void> loadSettings(String accountId) async {
-    settings.value = await _db.getOrCreateNotificationSettings(accountId);
+  Future<void> loadSettings(String pubkey) async {
+    settings.value = await _db.getOrCreateNotificationSettings(pubkey);
   }
 
   Future<void> toggleDm() async {
@@ -51,7 +52,9 @@ class SettingsController extends GetxController {
     await _updateSetting((s) => s.copyWith(reaction: !s.reaction));
   }
 
-  Future<void> _updateSetting(NotificationSettings Function(NotificationSettings) updater) async {
+  Future<void> _updateSetting(
+    NotificationSettings Function(NotificationSettings) updater,
+  ) async {
     final current = settings.value;
     if (current == null) return;
 
@@ -61,9 +64,9 @@ class SettingsController extends GetxController {
 
     // Reconnect to apply new filter
     final account = _accounts.selectedAccount.value;
-    if (account != null && account.active) {
-      await _nostr.disconnectAccount(account.id);
-      await _nostr.connectAccount(account, updated);
+    if (account != null) {
+      await _nostr.disconnectAccount(account.pubkey);
+      await _nostr.connectAccountFromNdk(account, updated);
     }
   }
 }

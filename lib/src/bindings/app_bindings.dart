@@ -7,6 +7,8 @@ class AppBindings extends Bindings {
   void dependencies() {
     Get.lazyPut<AccountsController>(() => AccountsController());
     Get.lazyPut<SettingsController>(() => SettingsController());
-    Get.lazyPut<NotificationHistoryController>(() => NotificationHistoryController());
+    Get.lazyPut<NotificationHistoryController>(
+      () => NotificationHistoryController(),
+    );
   }
 }

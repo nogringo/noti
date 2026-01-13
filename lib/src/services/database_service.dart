@@ -41,7 +41,9 @@ class DatabaseService extends GetxService {
   }
 
   // Notification Settings
-  Future<NotificationSettings?> getNotificationSettings(String accountId) async {
+  Future<NotificationSettings?> getNotificationSettings(
+    String accountId,
+  ) async {
     final record = await _settingsStore.record(accountId).get(_db);
     return record != null ? NotificationSettings.fromJson(record) : null;
   }
@@ -50,7 +52,9 @@ class DatabaseService extends GetxService {
     await _settingsStore.record(settings.accountId).put(_db, settings.toJson());
   }
 
-  Future<NotificationSettings> getOrCreateNotificationSettings(String accountId) async {
+  Future<NotificationSettings> getOrCreateNotificationSettings(
+    String accountId,
+  ) async {
     var settings = await getNotificationSettings(accountId);
     if (settings == null) {
       settings = NotificationSettings(accountId: accountId);
@@ -61,10 +65,15 @@ class DatabaseService extends GetxService {
 
   // Notification History
   Future<void> saveNotification(NotificationHistory notification) async {
-    await _notificationsStore.record(notification.id).put(_db, notification.toJson());
+    await _notificationsStore
+        .record(notification.id)
+        .put(_db, notification.toJson());
   }
 
-  Future<List<NotificationHistory>> getNotifications({String? accountId, int? limit}) async {
+  Future<List<NotificationHistory>> getNotifications({
+    String? accountId,
+    int? limit,
+  }) async {
     final finder = Finder(
       sortOrders: [SortOrder('createdAt', false)],
       limit: limit,
@@ -78,7 +87,9 @@ class DatabaseService extends GetxService {
     final record = await _notificationsStore.record(id).get(_db);
     if (record != null) {
       final notification = NotificationHistory.fromJson(record);
-      await _notificationsStore.record(id).put(_db, notification.copyWith(read: true).toJson());
+      await _notificationsStore
+          .record(id)
+          .put(_db, notification.copyWith(read: true).toJson());
     }
   }
 
@@ -94,7 +105,9 @@ class DatabaseService extends GetxService {
     final records = await _notificationsStore.find(_db, finder: finder);
     for (final record in records) {
       final notification = NotificationHistory.fromJson(record.value);
-      await _notificationsStore.record(record.key).put(_db, notification.copyWith(read: true).toJson());
+      await _notificationsStore
+          .record(record.key)
+          .put(_db, notification.copyWith(read: true).toJson());
     }
   }
 
@@ -137,7 +150,9 @@ class DatabaseService extends GetxService {
   }
 
   Future<void> cleanOldProcessedEvents({int maxAgeDays = 7}) async {
-    final cutoff = DateTime.now().subtract(Duration(days: maxAgeDays)).millisecondsSinceEpoch;
+    final cutoff = DateTime.now()
+        .subtract(Duration(days: maxAgeDays))
+        .millisecondsSinceEpoch;
     final finder = Finder(filter: Filter.lessThan('processedAt', cutoff));
     await _processedEventsStore.delete(_db, finder: finder);
   }

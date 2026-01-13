@@ -34,9 +34,12 @@ class NostrService extends GetxService {
     return this;
   }
 
-  Future<String?> connectAccount(NotifyAccount account, NotificationSettings settings) async {
+  Future<String?> connectAccountFromNdk(
+    Account account,
+    NotificationSettings settings,
+  ) async {
     try {
-      _settings[account.id] = settings;
+      _settings[account.pubkey] = settings;
 
       // Start subscriptions using shared NDK (with signer for AUTH)
       await _subscribeToEvents(account);
@@ -47,17 +50,34 @@ class NostrService extends GetxService {
     }
   }
 
-  Future<void> _subscribeToEvents(NotifyAccount account) async {
+  Future<void> _subscribeToEvents(Account account) async {
     final ndk = _ndkService.ndk;
-    final settings = _settings[account.id];
+    final settings = _settings[account.pubkey];
     if (settings == null) return;
 
+    // Switch to the correct account for AUTH before any requests (only if needed)
+    final currentAccount = ndk.accounts.getLoggedAccount();
+    if (currentAccount?.pubkey != account.pubkey) {
+      dev.log(
+        '[NostrService] Switching from ${currentAccount?.pubkey.substring(0, 8) ?? 'NONE'} to ${account.pubkey.substring(0, 8)}',
+      );
+      ndk.accounts.switchAccount(pubkey: account.pubkey);
+      await _ndkService.saveAccountState();
+    }
+
+    // Fetch relays for this account
+    final relays =
+        await fetchRelaysForPubkey(account.pubkey) ??
+        ['wss://relay.damus.io', 'wss://relay.nostr.band', 'wss://nos.lol'];
+
     final since = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    dev.log('[NostrService] Subscribing for account ${account.id}, relays: ${account.relays}');
+    dev.log(
+      '[NostrService] Subscribing for account ${account.pubkey.substring(0, 8)}, relays: $relays',
+    );
 
     // Subscribe to DMs on DM relays (NIP-17)
     if (settings.dm) {
-      await _subscribeToDms(account, ndk, since);
+      await _subscribeToDms(account, ndk, since, relays);
     }
 
     // Subscribe to other events on general relays
@@ -77,33 +97,42 @@ class NostrService extends GetxService {
 
     if (kinds.isEmpty) return;
 
-    final filter = Filter(
-      kinds: kinds,
-      pTags: [account.pubkey],
-      since: since,
-    );
+    final filter = Filter(kinds: kinds, pTags: [account.pubkey], since: since);
 
     final response = ndk.requests.subscription(
       filter: filter,
-      explicitRelays: account.relays,
+      explicitRelays: relays,
     );
 
     final subscription = response.stream.listen((event) {
-      dev.log('[NostrService] Event received: kind=${event.kind}, id=${event.id.substring(0, 8)}, from=${event.pubKey.substring(0, 8)}');
+      dev.log(
+        '[NostrService] Event received: kind=${event.kind}, id=${event.id.substring(0, 8)}, from=${event.pubKey.substring(0, 8)}',
+      );
       _handleEvent(account, event);
     });
 
-    _subscriptions[account.id] = subscription;
+    _subscriptions[account.pubkey] = subscription;
   }
 
-  Future<void> _subscribeToDms(NotifyAccount account, Ndk ndk, int since) async {
+  Future<void> _subscribeToDms(
+    Account account,
+    Ndk ndk,
+    int since,
+    List<String> relays,
+  ) async {
+    dev.log(
+      '[NostrService] DM subscription for account: ${account.pubkey.substring(0, 8)}',
+    );
+
     // Fetch DM relay list (kind 10050) for NIP-17 from user's general relays
-    List<String> dmRelays = await _fetchDmRelays(ndk, account.pubkey, account.relays);
+    List<String> dmRelays = await _fetchDmRelays(ndk, account.pubkey, relays);
 
     // Fallback to general relays if no DM relays found
     if (dmRelays.isEmpty) {
-      dev.log('[NostrService] No DM relays found (kind 10050), using general relays');
-      dmRelays = account.relays;
+      dev.log(
+        '[NostrService] No DM relays found (kind 10050), using general relays',
+      );
+      dmRelays = relays;
     } else {
       dev.log('[NostrService] DM relays (kind 10050): $dmRelays');
     }
@@ -123,21 +152,23 @@ class NostrService extends GetxService {
     );
 
     final dmSubscription = dmResponse.stream.listen((event) {
-      dev.log('[NostrService] DM Event received: kind=${event.kind}, id=${event.id.substring(0, 8)}, from=${event.pubKey.substring(0, 8)}');
+      dev.log(
+        '[NostrService] DM Event received: kind=${event.kind}, id=${event.id.substring(0, 8)}, from=${event.pubKey.substring(0, 8)}',
+      );
       _handleEvent(account, event);
     });
 
-    _dmSubscriptions[account.id] = dmSubscription;
+    _dmSubscriptions[account.pubkey] = dmSubscription;
   }
 
-  Future<List<String>> _fetchDmRelays(Ndk ndk, String pubkey, List<String> userRelays) async {
+  Future<List<String>> _fetchDmRelays(
+    Ndk ndk,
+    String pubkey,
+    List<String> userRelays,
+  ) async {
     try {
       final response = ndk.requests.query(
-        filter: Filter(
-          kinds: [kindDmRelayList],
-          authors: [pubkey],
-          limit: 1,
-        ),
+        filter: Filter(kinds: [kindDmRelayList], authors: [pubkey], limit: 1),
         explicitRelays: userRelays,
       );
 
@@ -157,13 +188,13 @@ class NostrService extends GetxService {
     return [];
   }
 
-  Future<void> _handleEvent(NotifyAccount account, Nip01Event event) async {
+  Future<void> _handleEvent(Account account, Nip01Event event) async {
     if (_trayService.isPaused) {
       dev.log('[NostrService] Event ignored: notifications paused');
       return;
     }
 
-    final settings = _settings[account.id];
+    final settings = _settings[account.pubkey];
     if (settings == null) {
       dev.log('[NostrService] Event ignored: no settings for account');
       return;
@@ -190,11 +221,7 @@ class NostrService extends GetxService {
       case kindGiftWrap:
         // NIP-17 DM (gift wrapped)
         if (settings.dm) {
-          dev.log('[NostrService] Notification: DM from ${event.pubKey.substring(0, 8)}');
-          _notificationService.showDmNotification(
-            accountId: account.id,
-            fromPubkey: event.pubKey,
-          );
+          await _handleGiftWrap(account, event);
         }
         break;
 
@@ -202,7 +229,7 @@ class NostrService extends GetxService {
         if (settings.mention && _isMention(event, account.pubkey)) {
           dev.log('[NostrService] Notification: Mention from $fromName');
           _notificationService.showMentionNotification(
-            accountId: account.id,
+            accountId: account.pubkey,
             fromName: fromName,
             eventId: event.id,
           );
@@ -213,7 +240,7 @@ class NostrService extends GetxService {
         if (settings.repost) {
           dev.log('[NostrService] Notification: Repost from $fromName');
           _notificationService.showRepostNotification(
-            accountId: account.id,
+            accountId: account.pubkey,
             fromName: fromName,
           );
         }
@@ -221,9 +248,11 @@ class NostrService extends GetxService {
 
       case kindReaction:
         if (settings.reaction) {
-          dev.log('[NostrService] Notification: Reaction "${event.content}" from $fromName');
+          dev.log(
+            '[NostrService] Notification: Reaction "${event.content}" from $fromName',
+          );
           _notificationService.showReactionNotification(
-            accountId: account.id,
+            accountId: account.pubkey,
             fromName: fromName,
             reaction: event.content,
           );
@@ -233,9 +262,11 @@ class NostrService extends GetxService {
       case kindZapReceipt:
         if (settings.zap) {
           final amount = _parseZapAmount(event);
-          dev.log('[NostrService] Notification: Zap $amount sats from $fromName');
+          dev.log(
+            '[NostrService] Notification: Zap $amount sats from $fromName',
+          );
           _notificationService.showZapNotification(
-            accountId: account.id,
+            accountId: account.pubkey,
             fromName: fromName,
             amount: amount,
           );
@@ -244,8 +275,56 @@ class NostrService extends GetxService {
     }
   }
 
+  Future<void> _handleGiftWrap(
+    Account account,
+    Nip01Event giftWrapEvent,
+  ) async {
+    try {
+      // Unwrap the gift wrap to get the actual message and sender
+      final ndk = _ndkService.ndk;
+      final rumor = await ndk.giftWrap.fromGiftWrap(giftWrap: giftWrapEvent);
+
+      final senderPubkey = rumor.pubKey;
+      final messagePreview = rumor.content.length > 50
+          ? '${rumor.content.substring(0, 50)}...'
+          : rumor.content;
+
+      // Don't notify for own messages
+      if (senderPubkey == account.pubkey) {
+        dev.log('[NostrService] DM ignored: own message');
+        return;
+      }
+
+      // Try to get sender's name
+      String senderName = _shortenPubkey(senderPubkey);
+      try {
+        final metadata = await ndk.metadata.loadMetadata(senderPubkey);
+        if (metadata != null) {
+          senderName = metadata.displayName ?? metadata.name ?? senderName;
+        }
+      } catch (_) {}
+
+      dev.log('[NostrService] Notification: DM from $senderName');
+      _notificationService.showDmNotification(
+        accountId: account.pubkey,
+        fromPubkey: senderPubkey,
+        fromName: senderName,
+        preview: messagePreview,
+      );
+    } catch (e) {
+      dev.log('[NostrService] Failed to unwrap gift wrap: $e');
+      // Fallback: show generic notification
+      _notificationService.showDmNotification(
+        accountId: account.pubkey,
+        fromPubkey: giftWrapEvent.pubKey,
+      );
+    }
+  }
+
   bool _isMention(Nip01Event event, String pubkey) {
-    return event.tags.any((tag) => tag.length >= 2 && tag[0] == 'p' && tag[1] == pubkey);
+    return event.tags.any(
+      (tag) => tag.length >= 2 && tag[0] == 'p' && tag[1] == pubkey,
+    );
   }
 
   int _parseZapAmount(Nip01Event event) {
@@ -270,7 +349,9 @@ class NostrService extends GetxService {
   }
 
   /// Fetch metadata for a specific pubkey
-  Future<({String? name, String? picture})?> fetchMetadataForPubkey(String pubkey) async {
+  Future<({String? name, String? picture})?> fetchMetadataForPubkey(
+    String pubkey,
+  ) async {
     final ndk = _ndkService.ndk;
     try {
       final metadata = await ndk.metadata.loadMetadata(pubkey);
@@ -288,7 +369,9 @@ class NostrService extends GetxService {
   Future<List<String>?> fetchRelaysForPubkey(String pubkey) async {
     final ndk = _ndkService.ndk;
     try {
-      final userRelayList = await ndk.userRelayLists.getSingleUserRelayList(pubkey);
+      final userRelayList = await ndk.userRelayLists.getSingleUserRelayList(
+        pubkey,
+      );
       if (userRelayList != null && userRelayList.urls.isNotEmpty) {
         return userRelayList.urls.toList();
       }
@@ -296,21 +379,24 @@ class NostrService extends GetxService {
     return null;
   }
 
-  Future<void> updateSettings(String accountId, NotificationSettings settings) async {
-    _settings[accountId] = settings;
+  Future<void> updateSettings(
+    String pubkey,
+    NotificationSettings settings,
+  ) async {
+    _settings[pubkey] = settings;
   }
 
-  Future<void> disconnectAccount(String accountId) async {
-    await _subscriptions[accountId]?.cancel();
-    _subscriptions.remove(accountId);
-    await _dmSubscriptions[accountId]?.cancel();
-    _dmSubscriptions.remove(accountId);
-    _settings.remove(accountId);
+  Future<void> disconnectAccount(String pubkey) async {
+    await _subscriptions[pubkey]?.cancel();
+    _subscriptions.remove(pubkey);
+    await _dmSubscriptions[pubkey]?.cancel();
+    _dmSubscriptions.remove(pubkey);
+    _settings.remove(pubkey);
   }
 
   Future<void> disconnectAll() async {
-    for (final id in _settings.keys.toList()) {
-      await disconnectAccount(id);
+    for (final pubkey in _settings.keys.toList()) {
+      await disconnectAccount(pubkey);
     }
   }
 

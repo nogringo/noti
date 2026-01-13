@@ -20,11 +20,7 @@ class NotificationToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return SwitchListTile(
       title: Row(
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-          Text(title),
-        ],
+        children: [Icon(icon, size: 20), const SizedBox(width: 8), Text(title)],
       ),
       subtitle: Text(subtitle),
       value: value,

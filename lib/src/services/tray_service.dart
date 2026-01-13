@@ -39,20 +39,16 @@ class TrayService extends GetxService with TrayListener {
     try {
       final menu = Menu(
         items: [
-          MenuItem(
-            key: 'open',
-            label: 'Open',
-          ),
+          MenuItem(key: 'open', label: 'Open'),
           MenuItem.separator(),
           MenuItem(
             key: 'pause',
-            label: _isPaused.value ? 'Resume notifications' : 'Pause notifications',
+            label: _isPaused.value
+                ? 'Resume notifications'
+                : 'Pause notifications',
           ),
           MenuItem.separator(),
-          MenuItem(
-            key: 'quit',
-            label: 'Quit',
-          ),
+          MenuItem(key: 'quit', label: 'Quit'),
         ],
       );
 

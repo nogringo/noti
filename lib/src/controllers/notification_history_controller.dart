@@ -19,7 +19,10 @@ class NotificationHistoryController extends GetxController {
   Future<void> loadNotifications({String? accountId}) async {
     isLoading.value = true;
     try {
-      final loaded = await _db.getNotifications(accountId: accountId, limit: 100);
+      final loaded = await _db.getNotifications(
+        accountId: accountId,
+        limit: 100,
+      );
       notifications.assignAll(loaded);
       await _updateUnreadCount(accountId: accountId);
     } finally {
