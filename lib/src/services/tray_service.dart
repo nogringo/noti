@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:path/path.dart' as path;
 import 'package:tray_manager/tray_manager.dart';
 
 class TrayService extends GetxService with TrayListener {
@@ -13,11 +16,20 @@ class TrayService extends GetxService with TrayListener {
   VoidCallback? onOpenRequested;
   VoidCallback? onQuitRequested;
 
+  String _getIconPath() {
+    if (kDebugMode) {
+      return 'assets/icons/app_icon.png';
+    }
+    // In release mode, the icon is in data/flutter_assets/
+    final exeDir = path.dirname(Platform.resolvedExecutable);
+    return path.join(exeDir, 'data', 'flutter_assets', 'assets', 'icons', 'app_icon.png');
+  }
+
   Future<TrayService> init() async {
     try {
       trayManager.addListener(this);
 
-      await trayManager.setIcon('assets/icons/app_icon.png');
+      await trayManager.setIcon(_getIconPath());
       await trayManager.setToolTip('Nostr Notifications');
 
       // Sur Linux/AppIndicator, on DOIT avoir un menu pour interagir
