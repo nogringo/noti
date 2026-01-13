@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -9,6 +10,13 @@ import 'src/services/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Check if another instance is already running
+  if (!await FlutterSingleInstance().isFirstInstance()) {
+    // Focus the existing window and exit
+    await FlutterSingleInstance().focus();
+    exit(0);
+  }
 
   // Initialize window manager for Linux desktop
   await windowManager.ensureInitialized();

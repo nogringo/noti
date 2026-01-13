@@ -20,7 +20,17 @@ class TrayService extends GetxService with TrayListener {
       await trayManager.setIcon('assets/icons/app_icon.png');
       await trayManager.setToolTip('Nostr Notifications');
 
-      await _updateMenu();
+      // Sur Linux/AppIndicator, on DOIT avoir un menu pour interagir
+      await trayManager.setContextMenu(
+        Menu(
+          items: [
+            MenuItem(key: 'open', label: 'Ouvrir'),
+            MenuItem.separator(),
+            MenuItem(key: 'quit', label: 'Quitter'),
+          ],
+        ),
+      );
+
       _isAvailable.value = true;
     } on MissingPluginException catch (e) {
       debugPrint('Tray manager not available: $e');
@@ -33,54 +43,28 @@ class TrayService extends GetxService with TrayListener {
     return this;
   }
 
-  Future<void> _updateMenu() async {
-    if (!_isAvailable.value) return;
-
-    try {
-      final menu = Menu(
-        items: [
-          MenuItem(key: 'open', label: 'Open'),
-          MenuItem.separator(),
-          MenuItem(
-            key: 'pause',
-            label: _isPaused.value
-                ? 'Resume notifications'
-                : 'Pause notifications',
-          ),
-          MenuItem.separator(),
-          MenuItem(key: 'quit', label: 'Quit'),
-        ],
-      );
-
-      await trayManager.setContextMenu(menu);
-    } catch (e) {
-      debugPrint('Failed to update tray menu: $e');
-    }
-  }
-
   void togglePause() {
     _isPaused.value = !_isPaused.value;
-    _updateMenu();
   }
 
   @override
   void onTrayIconMouseDown() {
+    // Sur Linux, les clics directs ne fonctionnent pas avec AppIndicator
+    // On garde pour Windows/macOS
     onOpenRequested?.call();
   }
 
   @override
-  void onTrayIconRightMouseDown() {
-    trayManager.popUpContextMenu();
-  }
+  void onTrayIconRightMouseDown() {}
+
+  @override
+  void onTrayIconRightMouseUp() {}
 
   @override
   void onTrayMenuItemClick(MenuItem menuItem) {
     switch (menuItem.key) {
       case 'open':
         onOpenRequested?.call();
-        break;
-      case 'pause':
-        togglePause();
         break;
       case 'quit':
         onQuitRequested?.call();

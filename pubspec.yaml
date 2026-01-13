@@ -20,9 +20,6 @@ dependencies:
   ndk: ^0.6.1-dev.6
   nostr_widgets: ^1.1.6
 
-  # System tray
-  tray_manager: ^0.5.2
-
   # Notifications
   flutter_local_notifications: ^19.5.0
 
@@ -33,6 +30,8 @@ dependencies:
 
   # Window management
   window_manager: ^0.5.1
+  tray_manager: ^0.5.2
+  flutter_single_instance: ^1.7.0
 
 dev_dependencies:
   flutter_test:

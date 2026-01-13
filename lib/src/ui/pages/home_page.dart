@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../../controllers/controllers.dart';
 import '../../models/models.dart';
@@ -50,9 +51,7 @@ class _HomePageState extends State<HomePage>
           IconButton(
             icon: const Icon(Icons.minimize),
             tooltip: 'Minimize to tray',
-            onPressed: () {
-              // TODO: Implement minimize to tray
-            },
+            onPressed: () => windowManager.hide(),
           ),
         ],
       ),
