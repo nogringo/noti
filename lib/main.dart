@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:get/get.dart';
+import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
@@ -20,6 +21,9 @@ void main(List<String> args) async {
 
   // Check if app should start minimized
   final startMinimized = args.contains('--minimized');
+
+  // Load system accent color
+  await SystemTheme.accentColor.load();
 
   // Initialize window manager for Linux desktop
   await windowManager.ensureInitialized();
