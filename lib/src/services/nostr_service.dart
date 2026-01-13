@@ -333,9 +333,32 @@ class NostrService extends GetxService {
         (tag) => tag.length >= 2 && tag[0] == 'bolt11',
         orElse: () => [],
       );
-      if (bolt11Tag.isNotEmpty) {
-        // Simple parsing - in production use a proper bolt11 decoder
-        return 0;
+      if (bolt11Tag.length < 2) return 0;
+
+      final invoice = bolt11Tag[1].toLowerCase();
+
+      // Match ln + network (bc/tb/bcrt) + amount + multiplier + "1" separator
+      final regex = RegExp(r'^ln(?:bc|tb|bcrt)(\d+)([munp]?)1');
+      final match = regex.firstMatch(invoice);
+
+      if (match == null) return 0;
+
+      final amount = int.parse(match.group(1)!);
+      final multiplier = match.group(2) ?? '';
+
+      // Convert to satoshis based on multiplier
+      // 1 BTC = 100,000,000 sats
+      switch (multiplier) {
+        case 'm': // milli-bitcoin = 0.001 BTC = 100,000 sats
+          return amount * 100000;
+        case 'u': // micro-bitcoin = 0.000001 BTC = 100 sats
+          return amount * 100;
+        case 'n': // nano-bitcoin = 0.000000001 BTC = 0.1 sats
+          return (amount * 0.1).round();
+        case 'p': // pico-bitcoin = 0.000000000001 BTC = 0.0001 sats
+          return (amount * 0.0001).round();
+        default: // no multiplier = BTC (rare)
+          return amount * 100000000;
       }
     } catch (_) {}
     return 0;
