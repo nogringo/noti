@@ -10,6 +10,7 @@ class DatabaseService extends GetxService {
 
   final _accountsStore = stringMapStoreFactory.store('accounts');
   final _settingsStore = stringMapStoreFactory.store('notification_settings');
+  final _appSettingsStore = stringMapStoreFactory.store('app_settings');
   final _notificationsStore = stringMapStoreFactory.store('notifications');
   final _processedEventsStore = stringMapStoreFactory.store('processed_events');
 
@@ -61,6 +62,16 @@ class DatabaseService extends GetxService {
       await saveNotificationSettings(settings);
     }
     return settings;
+  }
+
+  // App Settings
+  Future<AppSettings> getAppSettings() async {
+    final record = await _appSettingsStore.record('main').get(_db);
+    return record != null ? AppSettings.fromJson(record) : AppSettings();
+  }
+
+  Future<void> saveAppSettings(AppSettings settings) async {
+    await _appSettingsStore.record('main').put(_db, settings.toJson());
   }
 
   // Notification History

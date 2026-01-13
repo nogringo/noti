@@ -311,6 +311,7 @@ class _HomePageState extends State<HomePage>
     SettingsController controller,
   ) {
     final accountsController = Get.find<AccountsController>();
+    final appSettingsController = Get.find<AppSettingsController>();
     final name = accountsController.getAccountName(account.pubkey);
     final picture = accountsController.getAccountPicture(account.pubkey);
 
@@ -377,6 +378,34 @@ class _HomePageState extends State<HomePage>
                 onChanged: (_) => controller.toggleReaction(),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text('Application', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Obx(
+          () => Card(
+            child: Column(
+              children: [
+                NotificationToggle(
+                  title: 'Launch at startup',
+                  subtitle: 'Start automatically when you log in',
+                  icon: Icons.power_settings_new,
+                  value: appSettingsController.settings.value.launchAtStartup,
+                  onChanged: (_) =>
+                      appSettingsController.toggleLaunchAtStartup(),
+                ),
+                const Divider(height: 1),
+                NotificationToggle(
+                  title: 'Start minimized',
+                  subtitle: 'Start in the system tray',
+                  icon: Icons.visibility_off,
+                  value: appSettingsController.settings.value.startMinimized,
+                  onChanged: (_) =>
+                      appSettingsController.toggleStartMinimized(),
+                ),
+              ],
+            ),
           ),
         ),
       ],

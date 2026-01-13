@@ -10,5 +10,6 @@ class AppBindings extends Bindings {
     Get.lazyPut<NotificationHistoryController>(
       () => NotificationHistoryController(),
     );
+    Get.lazyPut<AppSettingsController>(() => AppSettingsController());
   }
 }

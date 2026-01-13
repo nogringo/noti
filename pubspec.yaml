@@ -32,6 +32,8 @@ dependencies:
   window_manager: ^0.5.1
   tray_manager: ^0.5.2
   flutter_single_instance: ^1.7.0
+  launch_at_startup: ^0.5.1
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

@@ -8,7 +8,7 @@ import 'package:window_manager/window_manager.dart';
 import 'app.dart';
 import 'src/services/services.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Check if another instance is already running
@@ -17,6 +17,9 @@ void main() async {
     await FlutterSingleInstance().focus();
     exit(0);
   }
+
+  // Check if app should start minimized
+  final startMinimized = args.contains('--minimized');
 
   // Initialize window manager for Linux desktop
   await windowManager.ensureInitialized();
@@ -29,8 +32,10 @@ void main() async {
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
+    if (!startMinimized) {
+      await windowManager.show();
+      await windowManager.focus();
+    }
   });
 
   // Initialize services
