@@ -13,6 +13,9 @@ import 'src/services/services.dart';
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load system accent color (works on all platforms)
+  await SystemTheme.accentColor.load();
+
   if (!kIsWeb) {
     // Check if another instance is already running
     if (!await FlutterSingleInstance().isFirstInstance()) {
@@ -23,9 +26,6 @@ void main(List<String> args) async {
 
     // Check if app should start minimized
     final startMinimized = args.contains('--minimized');
-
-    // Load system accent color
-    await SystemTheme.accentColor.load();
 
     // Initialize window manager for desktop
     await windowManager.ensureInitialized();
@@ -58,18 +58,20 @@ Future<void> _initServices() async {
   // Notifications
   await Get.putAsync(() => NotificationService().init());
 
-  // Tray
-  final trayService = await Get.putAsync(() => TrayService().init());
+  // Tray (desktop only)
+  if (!kIsWeb) {
+    final trayService = await Get.putAsync(() => TrayService().init());
 
-  // Configure tray callbacks
-  trayService.onOpenRequested = () async {
-    await windowManager.show();
-    await windowManager.focus();
-  };
+    // Configure tray callbacks
+    trayService.onOpenRequested = () async {
+      await windowManager.show();
+      await windowManager.focus();
+    };
 
-  trayService.onQuitRequested = () {
-    exit(0);
-  };
+    trayService.onQuitRequested = () {
+      exit(0);
+    };
+  }
 
   // NDK service (shared instance with signer)
   await Get.putAsync(() => NdkService().init());

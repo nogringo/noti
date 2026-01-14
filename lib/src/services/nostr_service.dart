@@ -12,9 +12,11 @@ import 'tray_service.dart';
 
 class NostrService extends GetxService {
   final NotificationService _notificationService = Get.find();
-  final TrayService _trayService = Get.find();
   final DatabaseService _db = Get.find();
   final NdkService _ndkService = Get.find();
+
+  TrayService? get _trayService =>
+      Get.isRegistered<TrayService>() ? Get.find<TrayService>() : null;
 
   final Map<String, StreamSubscription> _subscriptions = {};
   final Map<String, StreamSubscription> _dmSubscriptions = {};
@@ -189,7 +191,7 @@ class NostrService extends GetxService {
   }
 
   Future<void> _handleEvent(Account account, Nip01Event event) async {
-    if (_trayService.isPaused) {
+    if (_trayService?.isPaused ?? false) {
       dev.log('[NostrService] Event ignored: notifications paused');
       return;
     }

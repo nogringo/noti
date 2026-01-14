@@ -388,34 +388,36 @@ class _HomePageState extends State<HomePage>
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        Text(l.application, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Obx(
-          () => Card(
-            child: Column(
-              children: [
-                NotificationToggle(
-                  title: l.launchAtStartup,
-                  subtitle: l.launchAtStartupDesc,
-                  icon: Icons.power_settings_new,
-                  value: appSettingsController.settings.value.launchAtStartup,
-                  onChanged: (_) =>
-                      appSettingsController.toggleLaunchAtStartup(),
-                ),
-                const Divider(height: 1),
-                NotificationToggle(
-                  title: l.startMinimized,
-                  subtitle: l.startMinimizedDesc,
-                  icon: Icons.visibility_off,
-                  value: appSettingsController.settings.value.startMinimized,
-                  onChanged: (_) =>
-                      appSettingsController.toggleStartMinimized(),
-                ),
-              ],
+        if (!kIsWeb) ...[
+          const SizedBox(height: 24),
+          Text(l.application, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Obx(
+            () => Card(
+              child: Column(
+                children: [
+                  NotificationToggle(
+                    title: l.launchAtStartup,
+                    subtitle: l.launchAtStartupDesc,
+                    icon: Icons.power_settings_new,
+                    value: appSettingsController.settings.value.launchAtStartup,
+                    onChanged: (_) =>
+                        appSettingsController.toggleLaunchAtStartup(),
+                  ),
+                  const Divider(height: 1),
+                  NotificationToggle(
+                    title: l.startMinimized,
+                    subtitle: l.startMinimizedDesc,
+                    icon: Icons.visibility_off,
+                    value: appSettingsController.settings.value.startMinimized,
+                    onChanged: (_) =>
+                        appSettingsController.toggleStartMinimized(),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

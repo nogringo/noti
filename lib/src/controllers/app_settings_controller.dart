@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -22,11 +23,15 @@ class AppSettingsController extends GetxController {
   Future<void> _loadSettings() async {
     isLoading.value = true;
     settings.value = await _db.getAppSettings();
-    await _setupLaunchAtStartup();
+    if (!kIsWeb) {
+      await _setupLaunchAtStartup();
+    }
     isLoading.value = false;
   }
 
   Future<void> _setupLaunchAtStartup() async {
+    if (kIsWeb) return;
+
     final packageInfo = await PackageInfo.fromPlatform();
 
     launchAtStartup.setup(
@@ -37,6 +42,8 @@ class AppSettingsController extends GetxController {
   }
 
   Future<void> toggleLaunchAtStartup() async {
+    if (kIsWeb) return;
+
     final newValue = !settings.value.launchAtStartup;
 
     if (newValue) {
@@ -50,6 +57,8 @@ class AppSettingsController extends GetxController {
   }
 
   Future<void> toggleStartMinimized() async {
+    if (kIsWeb) return;
+
     final newValue = !settings.value.startMinimized;
     settings.value = settings.value.copyWith(startMinimized: newValue);
     await _db.saveAppSettings(settings.value);

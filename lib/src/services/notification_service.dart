@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:window_manager/window_manager.dart';
@@ -5,15 +6,29 @@ import 'package:window_manager/window_manager.dart';
 import '../controllers/notification_history_controller.dart';
 import '../models/models.dart';
 import 'database_service.dart';
+import 'notification_service_stub.dart'
+    if (dart.library.html) 'notification_service_web.dart'
+    as web_notif;
 
 class NotificationService extends GetxService {
-  final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin? _notifications;
   late final DatabaseService _db;
   NotificationHistoryController? _historyController;
 
   Future<NotificationService> init() async {
     _db = Get.find<DatabaseService>();
+
+    if (kIsWeb) {
+      web_notif.initWebNotifications();
+    } else {
+      await _initDesktopNotifications();
+    }
+
+    return this;
+  }
+
+  Future<void> _initDesktopNotifications() async {
+    _notifications = FlutterLocalNotificationsPlugin();
 
     final linuxSettings = LinuxInitializationSettings(
       defaultActionName: 'Open',
@@ -22,12 +37,10 @@ class NotificationService extends GetxService {
 
     final initSettings = InitializationSettings(linux: linuxSettings);
 
-    await _notifications.initialize(
+    await _notifications!.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
-
-    return this;
   }
 
   Future<void> _onNotificationTap(NotificationResponse response) async {
@@ -58,6 +71,26 @@ class NotificationService extends GetxService {
     required String body,
     String? payload,
   }) async {
+    if (kIsWeb) {
+      _showWebNotification(title: title, body: body);
+    } else {
+      await _showDesktopNotification(
+        title: title,
+        body: body,
+        payload: payload,
+      );
+    }
+  }
+
+  void _showWebNotification({required String title, required String body}) {
+    web_notif.showWebNotification(title: title, body: body);
+  }
+
+  Future<void> _showDesktopNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
     const linuxDetails = LinuxNotificationDetails(
       urgency: LinuxNotificationUrgency.normal,
       category: LinuxNotificationCategory.imReceived,
@@ -65,7 +98,7 @@ class NotificationService extends GetxService {
 
     const details = NotificationDetails(linux: linuxDetails);
 
-    await _notifications.show(
+    await _notifications!.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
