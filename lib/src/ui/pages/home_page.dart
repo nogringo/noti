@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
@@ -50,11 +51,12 @@ class _HomePageState extends State<HomePage>
       appBar: AppBar(
         title: Text(l.appTitle),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.minimize),
-            tooltip: l.minimizeToTray,
-            onPressed: () => windowManager.hide(),
-          ),
+          if (!kIsWeb)
+            IconButton(
+              icon: const Icon(Icons.minimize),
+              tooltip: l.minimizeToTray,
+              onPressed: () => windowManager.hide(),
+            ),
         ],
       ),
       body: Row(
