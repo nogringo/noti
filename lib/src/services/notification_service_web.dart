@@ -30,12 +30,20 @@ void showWebNotification({required String title, required String body}) {
   // Change favicon to notification icon
   _setFavicon(_notificationFavicon);
 
-  if (!webNotificationsGranted) return;
+  if (webNotificationsGranted) {
+    web.Notification(
+      title,
+      web.NotificationOptions(body: body, icon: 'icons/Icon-192.png'),
+    );
+  } else {
+    // Play custom sound if notifications not granted
+    _playNotificationSound();
+  }
+}
 
-  web.Notification(
-    title,
-    web.NotificationOptions(body: body, icon: 'icons/Icon-192.png'),
-  );
+void _playNotificationSound() {
+  final audio = web.HTMLAudioElement()..src = 'notification.wav';
+  audio.play();
 }
 
 void _setFavicon(String href) {
