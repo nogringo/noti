@@ -1,5 +1,5 @@
-name: nostr_notify
-description: "Nostr notifications daemon for Linux desktop"
+name: noti
+description: "Lightweight Nostr notifications - DMs, mentions, zaps, reposts & reactions"
 publish_to: 'none'
 
 version: 1.0.0+1

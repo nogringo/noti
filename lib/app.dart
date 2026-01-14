@@ -6,15 +6,15 @@ import 'package:system_theme/system_theme.dart';
 import 'src/bindings/app_bindings.dart';
 import 'src/ui/pages/pages.dart';
 
-class NostrNotifyApp extends StatelessWidget {
-  const NostrNotifyApp({super.key});
+class NotiApp extends StatelessWidget {
+  const NotiApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     final accentColor = SystemTheme.accentColor.accent;
 
     return GetMaterialApp(
-      title: 'Nostr Notifications',
+      title: 'Noti',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

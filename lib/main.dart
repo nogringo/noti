@@ -32,7 +32,7 @@ void main(List<String> args) async {
     size: Size(800, 600),
     minimumSize: Size(600, 400),
     center: true,
-    title: 'Nostr Notifications',
+    title: 'Noti',
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -45,7 +45,7 @@ void main(List<String> args) async {
   // Initialize services
   await _initServices();
 
-  runApp(const NostrNotifyApp());
+  runApp(const NotiApp());
 }
 
 Future<void> _initServices() async {

@@ -1,16 +1,65 @@
-# nostr_notify
+# Noti
 
-A new Flutter project.
+Lightweight Nostr notifications - DMs, mentions, zaps, reposts & reactions.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- **Desktop Notifications** - Receive native Linux notifications for Nostr events
+- **Multiple Accounts** - Monitor notifications for multiple Nostr accounts
+- **Notification Types**:
+  - Direct Messages (NIP-17 encrypted DMs)
+  - Mentions
+  - Zaps (Lightning payments)
+  - Reposts
+  - Reactions
+- **System Tray** - Runs quietly in your system tray
+- **Launch at Startup** - Optional auto-start on login
+- **Start Minimized** - Launch directly to tray
+- **Notification History** - View past notifications in the app
+- **Internationalization** - English and French supported
+- **System Theme** - Follows your desktop accent color
 
-A few resources to get you started if this is your first Flutter project:
+## Requirements
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Linux desktop environment
+- Flutter SDK 3.10.4+
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/noti.git
+cd noti
+
+# Install dependencies
+flutter pub get
+
+# Build
+flutter build linux --release
+
+# The executable will be at build/linux/x64/release/bundle/noti
+```
+
+## Usage
+
+```bash
+# Run normally
+./noti
+
+# Run minimized to tray
+./noti --minimized
+```
+
+## Development
+
+```bash
+# Run in debug mode
+flutter run -d linux
+
+# Generate localizations
+flutter gen-l10n
+```
+
+## License
+
+See [LICENSE](LICENSE) file.
