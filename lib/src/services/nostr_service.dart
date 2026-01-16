@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:math';
 
@@ -298,9 +299,10 @@ class NostrService extends GetxService {
       final rumor = await ndk.giftWrap.fromGiftWrap(giftWrap: giftWrapEvent);
 
       final senderPubkey = rumor.pubKey;
-      final messagePreview = rumor.content.length > 50
-          ? '${rumor.content.substring(0, 50)}...'
-          : rumor.content;
+      final fullContent = rumor.content;
+      final messagePreview = fullContent.length > 50
+          ? '${fullContent.substring(0, 50)}...'
+          : fullContent;
 
       // Don't notify for own messages
       if (senderPubkey == account.pubkey) {
@@ -317,12 +319,16 @@ class NostrService extends GetxService {
         }
       } catch (_) {}
 
+      final rawEvent = jsonEncode(giftWrapEvent.toJson());
+
       dev.log('[NostrService] Notification: DM from $senderName');
       _notificationService.showDmNotification(
         accountId: account.pubkey,
         fromPubkey: senderPubkey,
         fromName: senderName,
         preview: messagePreview,
+        fullContent: fullContent,
+        rawEvent: rawEvent,
       );
     } catch (e) {
       dev.log('[NostrService] Failed to unwrap gift wrap: $e');

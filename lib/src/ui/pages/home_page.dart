@@ -272,7 +272,15 @@ class _HomePageState extends State<HomePage>
                 final notification = controller.notifications[index];
                 return NotificationTile(
                   notification: notification,
-                  onTap: () => controller.markAsRead(notification.id),
+                  onTap: () {
+                    controller.markAsRead(notification.id);
+                    showDialog(
+                      context: context,
+                      builder: (context) => NotificationDetailDialog(
+                        notification: notification,
+                      ),
+                    );
+                  },
                   onDismiss: () =>
                       controller.deleteNotification(notification.id),
                 );

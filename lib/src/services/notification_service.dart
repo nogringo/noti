@@ -112,6 +112,8 @@ class NotificationService extends GetxService {
     required String fromPubkey,
     String? fromName,
     String? preview,
+    String? fullContent,
+    String? rawEvent,
   }) async {
     final title = fromName != null ? 'DM from $fromName' : 'New DM';
     final body = preview ?? 'You received a new message';
@@ -122,6 +124,8 @@ class NotificationService extends GetxService {
       type: NotificationType.dm,
       title: title,
       body: body,
+      fullContent: fullContent,
+      rawEvent: rawEvent,
       fromPubkey: fromPubkey,
       createdAt: DateTime.now(),
     );

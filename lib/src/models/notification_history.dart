@@ -6,6 +6,8 @@ class NotificationHistory {
   final NotificationType type;
   final String title;
   final String body;
+  final String? fullContent;
+  final String? rawEvent;
   final String? fromPubkey;
   final String? eventId;
   final int? zapAmount;
@@ -19,6 +21,8 @@ class NotificationHistory {
     required this.type,
     required this.title,
     required this.body,
+    this.fullContent,
+    this.rawEvent,
     this.fromPubkey,
     this.eventId,
     this.zapAmount,
@@ -33,6 +37,8 @@ class NotificationHistory {
     'type': type.name,
     'title': title,
     'body': body,
+    'fullContent': fullContent,
+    'rawEvent': rawEvent,
     'fromPubkey': fromPubkey,
     'eventId': eventId,
     'zapAmount': zapAmount,
@@ -48,6 +54,8 @@ class NotificationHistory {
       type: NotificationType.values.byName(json['type'] as String),
       title: json['title'] as String,
       body: json['body'] as String,
+      fullContent: json['fullContent'] as String?,
+      rawEvent: json['rawEvent'] as String?,
       fromPubkey: json['fromPubkey'] as String?,
       eventId: json['eventId'] as String?,
       zapAmount: json['zapAmount'] as int?,
@@ -63,6 +71,8 @@ class NotificationHistory {
     NotificationType? type,
     String? title,
     String? body,
+    String? fullContent,
+    String? rawEvent,
     String? fromPubkey,
     String? eventId,
     int? zapAmount,
@@ -76,6 +86,8 @@ class NotificationHistory {
       type: type ?? this.type,
       title: title ?? this.title,
       body: body ?? this.body,
+      fullContent: fullContent ?? this.fullContent,
+      rawEvent: rawEvent ?? this.rawEvent,
       fromPubkey: fromPubkey ?? this.fromPubkey,
       eventId: eventId ?? this.eventId,
       zapAmount: zapAmount ?? this.zapAmount,
