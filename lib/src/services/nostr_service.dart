@@ -244,8 +244,11 @@ class NostrService extends GetxService {
           dev.log('[NostrService] Notification: Mention from $fromName');
           _notificationService.showMentionNotification(
             accountId: account.pubkey,
+            fromPubkey: event.pubKey,
             fromName: fromName,
             eventId: event.id,
+            fullContent: event.content,
+            rawEvent: jsonEncode(event.toJson()),
           );
         }
         break;

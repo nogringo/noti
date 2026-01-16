@@ -136,8 +136,11 @@ class NotificationService extends GetxService {
 
   Future<void> showMentionNotification({
     required String accountId,
+    required String fromPubkey,
     required String fromName,
     required String eventId,
+    String? fullContent,
+    String? rawEvent,
   }) async {
     final title = 'Mention';
     final body = '$fromName mentioned you';
@@ -148,6 +151,9 @@ class NotificationService extends GetxService {
       type: NotificationType.mention,
       title: title,
       body: body,
+      fullContent: fullContent,
+      rawEvent: rawEvent,
+      fromPubkey: fromPubkey,
       eventId: eventId,
       createdAt: DateTime.now(),
     );

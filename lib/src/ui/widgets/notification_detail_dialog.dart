@@ -14,10 +14,7 @@ import '../../services/ndk_service.dart';
 class NotificationDetailDialog extends StatefulWidget {
   final NotificationHistory notification;
 
-  const NotificationDetailDialog({
-    super.key,
-    required this.notification,
-  });
+  const NotificationDetailDialog({super.key, required this.notification});
 
   @override
   State<NotificationDetailDialog> createState() =>
@@ -138,20 +135,24 @@ class _NotificationDetailDialogState extends State<NotificationDetailDialog>
             Text(
               'From',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 8),
             Builder(
               builder: (context) {
                 final npub = Nip19.encodePubKey(notification.fromPubkey!);
-                final fallbackLetters = npub.substring(npub.length - 2).toUpperCase();
+                final fallbackLetters = npub
+                    .substring(npub.length - 2)
+                    .toUpperCase();
 
                 return Row(
                   children: [
                     CircleAvatar(
                       radius: 20,
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
                       backgroundImage: _senderMetadata?.picture != null
                           ? NetworkImage(_senderMetadata!.picture!)
                           : null,
@@ -159,7 +160,9 @@ class _NotificationDetailDialogState extends State<NotificationDetailDialog>
                           ? Text(
                               fallbackLetters,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             )
@@ -183,8 +186,8 @@ class _NotificationDetailDialogState extends State<NotificationDetailDialog>
           Text(
             'Message',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 4),
           SelectableText(
@@ -195,8 +198,8 @@ class _NotificationDetailDialogState extends State<NotificationDetailDialog>
           Text(
             'Received',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -227,10 +230,7 @@ class _NotificationDetailDialogState extends State<NotificationDetailDialog>
                   ? a11yDarkTheme
                   : a11yLightTheme,
               padding: const EdgeInsets.all(12),
-              textStyle: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-              ),
+              textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 12),
             ),
           ),
         ),

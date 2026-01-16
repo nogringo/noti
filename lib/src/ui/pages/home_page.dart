@@ -276,9 +276,8 @@ class _HomePageState extends State<HomePage>
                     controller.markAsRead(notification.id);
                     showDialog(
                       context: context,
-                      builder: (context) => NotificationDetailDialog(
-                        notification: notification,
-                      ),
+                      builder: (context) =>
+                          NotificationDetailDialog(notification: notification),
                     );
                   },
                   onDismiss: () =>
