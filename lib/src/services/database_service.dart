@@ -173,4 +173,20 @@ class DatabaseService extends GetxService {
     final finder = Finder(filter: Filter.lessThan('processedAt', cutoff));
     await _processedEventsStore.delete(_db, finder: finder);
   }
+
+  // Last Seen Timestamp (for missed notifications recovery)
+  Future<int?> getLastSeenTimestamp(String pubkey) async {
+    final record = await _appSettingsStore.record('lastSeen_$pubkey').get(_db);
+    return record?['timestamp'] as int?;
+  }
+
+  Future<void> saveLastSeenTimestamp(String pubkey, int timestamp) async {
+    final current = await getLastSeenTimestamp(pubkey);
+    // Only save if newer than current
+    if (current == null || timestamp > current) {
+      await _appSettingsStore.record('lastSeen_$pubkey').put(_db, {
+        'timestamp': timestamp,
+      });
+    }
+  }
 }

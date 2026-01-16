@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as dev;
+import 'dart:math';
 
 import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
@@ -72,9 +73,16 @@ class NostrService extends GetxService {
         await fetchRelaysForPubkey(account.pubkey) ??
         ['wss://relay.damus.io', 'wss://relay.nostr.band', 'wss://nos.lol'];
 
-    final since = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    // Load saved timestamp or use now (for missed notifications recovery)
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final savedTimestamp = await _db.getLastSeenTimestamp(account.pubkey);
+    final sevenDaysAgo = now - (7 * 24 * 60 * 60);
+    final since = savedTimestamp != null
+        ? max(savedTimestamp, sevenDaysAgo) // Don't go back more than 7 days
+        : now;
+
     dev.log(
-      '[NostrService] Subscribing for account ${account.pubkey.substring(0, 8)}, relays: $relays',
+      '[NostrService] Subscribing for account ${account.pubkey.substring(0, 8)}, relays: $relays, since: $since (saved: $savedTimestamp)',
     );
 
     // Subscribe to DMs on DM relays (NIP-17)
@@ -216,6 +224,9 @@ class NostrService extends GetxService {
 
     // Mark as processed
     await _db.markEventProcessed(event.id);
+
+    // Save timestamp for missed notifications recovery
+    await _db.saveLastSeenTimestamp(account.pubkey, event.createdAt);
 
     final fromName = _shortenPubkey(event.pubKey);
 
