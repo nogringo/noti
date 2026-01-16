@@ -142,8 +142,11 @@ class NotificationService extends GetxService {
     String? fullContent,
     String? rawEvent,
   }) async {
-    final title = 'Mention';
-    final body = '$fromName mentioned you';
+    final title = 'Mention from $fromName';
+    final preview = fullContent != null && fullContent.length > 50
+        ? '${fullContent.substring(0, 50)}...'
+        : fullContent ?? '';
+    final body = preview.isNotEmpty ? preview : '$fromName mentioned you';
 
     final notification = NotificationHistory(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

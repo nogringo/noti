@@ -229,8 +229,6 @@ class NostrService extends GetxService {
     // Save timestamp for missed notifications recovery
     await _db.saveLastSeenTimestamp(account.pubkey, event.createdAt);
 
-    final fromName = _shortenPubkey(event.pubKey);
-
     switch (event.kind) {
       case kindGiftWrap:
         // NIP-17 DM (gift wrapped)
@@ -241,11 +239,14 @@ class NostrService extends GetxService {
 
       case kindNote:
         if (settings.mention && _isMention(event, account.pubkey)) {
-          dev.log('[NostrService] Notification: Mention from $fromName');
+          // Load sender metadata
+          final senderName = await _getDisplayName(event.pubKey);
+
+          dev.log('[NostrService] Notification: Mention from $senderName');
           _notificationService.showMentionNotification(
             accountId: account.pubkey,
             fromPubkey: event.pubKey,
-            fromName: fromName,
+            fromName: senderName,
             eventId: event.id,
             fullContent: event.content,
             rawEvent: jsonEncode(event.toJson()),
@@ -255,22 +256,24 @@ class NostrService extends GetxService {
 
       case kindRepost:
         if (settings.repost) {
-          dev.log('[NostrService] Notification: Repost from $fromName');
+          final senderName = await _getDisplayName(event.pubKey);
+          dev.log('[NostrService] Notification: Repost from $senderName');
           _notificationService.showRepostNotification(
             accountId: account.pubkey,
-            fromName: fromName,
+            fromName: senderName,
           );
         }
         break;
 
       case kindReaction:
         if (settings.reaction) {
+          final senderName = await _getDisplayName(event.pubKey);
           dev.log(
-            '[NostrService] Notification: Reaction "${event.content}" from $fromName',
+            '[NostrService] Notification: Reaction "${event.content}" from $senderName',
           );
           _notificationService.showReactionNotification(
             accountId: account.pubkey,
-            fromName: fromName,
+            fromName: senderName,
             reaction: event.content,
           );
         }
@@ -278,13 +281,14 @@ class NostrService extends GetxService {
 
       case kindZapReceipt:
         if (settings.zap) {
+          final senderName = await _getDisplayName(event.pubKey);
           final amount = _parseZapAmount(event);
           dev.log(
-            '[NostrService] Notification: Zap $amount sats from $fromName',
+            '[NostrService] Notification: Zap $amount sats from $senderName',
           );
           _notificationService.showZapNotification(
             accountId: account.pubkey,
-            fromName: fromName,
+            fromName: senderName,
             amount: amount,
           );
         }
@@ -313,14 +317,7 @@ class NostrService extends GetxService {
         return;
       }
 
-      // Try to get sender's name
-      String senderName = _shortenPubkey(senderPubkey);
-      try {
-        final metadata = await ndk.metadata.loadMetadata(senderPubkey);
-        if (metadata != null) {
-          senderName = metadata.displayName ?? metadata.name ?? senderName;
-        }
-      } catch (_) {}
+      final senderName = await _getDisplayName(senderPubkey);
 
       final rawEvent = jsonEncode(giftWrapEvent.toJson());
 
@@ -386,11 +383,17 @@ class NostrService extends GetxService {
     return 0;
   }
 
-  String _shortenPubkey(String pubkey) {
-    if (pubkey.length > 12) {
-      return '${pubkey.substring(0, 8)}...${pubkey.substring(pubkey.length - 4)}';
-    }
-    return pubkey;
+  Future<String> _getDisplayName(String pubkey) async {
+    try {
+      final metadata = await _ndkService.ndk.metadata.loadMetadata(pubkey);
+      if (metadata != null) {
+        final name = metadata.displayName ?? metadata.name;
+        if (name != null && name.isNotEmpty) return name;
+      }
+    } catch (_) {}
+    // Fallback: shortened npub
+    final npub = Nip19.encodePubKey(pubkey);
+    return '${npub.substring(0, 8)}...${npub.substring(npub.length - 4)}';
   }
 
   /// Fetch metadata for a specific pubkey
