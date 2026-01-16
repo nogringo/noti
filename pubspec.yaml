@@ -2,7 +2,7 @@ name: noti
 description: "Lightweight Nostr notifications - DMs, mentions, zaps, reposts & reactions"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.2.0
 
 environment:
   sdk: ^3.10.4
