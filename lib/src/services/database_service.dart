@@ -17,11 +17,12 @@ class DatabaseService extends GetxService {
   final _processedEventsStore = stringMapStoreFactory.store('processed_events');
 
   Future<DatabaseService> init() async {
+    final dbName = kDebugMode ? 'noti_dev.db' : 'noti.db';
     if (kIsWeb) {
-      _db = await databaseFactoryWeb.openDatabase('noti.db');
+      _db = await databaseFactoryWeb.openDatabase(dbName);
     } else {
       final appDir = await getApplicationSupportDirectory();
-      final dbPath = join(appDir.path, 'noti.db');
+      final dbPath = join(appDir.path, dbName);
       _db = await databaseFactoryIo.openDatabase(dbPath);
     }
     return this;
