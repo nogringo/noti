@@ -97,14 +97,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.9.0"
-  dartstr_utils:
-    dependency: transitive
-    description:
-      name: dartstr_utils
-      sha256: f30f0778a6a9dad2e5522ff5c84b82a2d86c2236f3ed3da8bcd5251090ba72aa
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.2"
   dbus:
     dependency: transitive
     description:
@@ -465,50 +457,34 @@ packages:
     dependency: "direct main"
     description:
       name: ndk
-      sha256: de9ea54bf525c8f18381a4ba322953189f88d2bff27dca57fa1454e7d2834836
+      sha256: b741ba3ddc7a4f7905569725f1bf203fcff1362f0babf5cccf556cde562f8e01
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.1-dev.6"
+    version: "0.7.1-dev.0"
   ndk_amber:
     dependency: transitive
     description:
       name: ndk_amber
-      sha256: d5222d79eb7526021df1289cc59894e045ae80748714bd56e35f24b4d13b99a6
+      sha256: "9789a67d5b839c459b027ac7636a4021e126199c7d3b3361863ddba7ed55fe2e"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.3"
-  nip01:
-    dependency: transitive
-    description:
-      name: nip01
-      sha256: "33ae1967c090d5f0d7b42242d5f8ca338490d9994ff40618596723f57dbddd54"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0+1"
+    version: "0.4.0"
   nip07_event_signer:
     dependency: transitive
     description:
       name: nip07_event_signer
-      sha256: e8718a9058aa445949537d17ec56ea61ecc7309675b140d0ef4d790902c05ec1
+      sha256: "574d1b9cb6412121ecf7a9cf1b86772ab9eb30cfe8d051a7d72bbd22351fa93b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.4"
-  nip19:
-    dependency: transitive
-    description:
-      name: nip19
-      sha256: "0bd8f866f0db72feeb60fd074169e850398983d2a67b76eef772e75d99bc53b8"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+    version: "1.0.6-dev.0"
   nostr_widgets:
     dependency: "direct main"
     description:
       name: nostr_widgets
-      sha256: f1b4541d286d4cc6a04312396025b8616be8071f40146e1f5126adc03a4c6137
+      sha256: b640ebf7b875659ab35fbbfec1bbb18cf889890f54f8a488691b1ade66b1af1e
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.6"
+    version: "1.2.1"
   package_info_plus:
     dependency: "direct main"
     description:
@@ -705,10 +681,10 @@ packages:
     dependency: "direct main"
     description:
       name: sembast_cache_manager
-      sha256: f397d22ca4c02fd9ca77c58ffee977f633b3f9cf0d204f827207e43ba9458eb5
+      sha256: "4de2c8129baff0265af2364212502042d6bfb69ff4c1484bb6698529258f23c5"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.5"
+    version: "1.0.6"
   sembast_web:
     dependency: "direct main"
     description:

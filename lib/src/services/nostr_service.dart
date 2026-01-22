@@ -249,7 +249,7 @@ class NostrService extends GetxService {
             fromName: senderName,
             eventId: event.id,
             fullContent: event.content,
-            rawEvent: jsonEncode(event.toJson()),
+            rawEvent: jsonEncode(Nip01EventModel.fromEntity(event).toJson()),
           );
         }
         break;
@@ -319,7 +319,9 @@ class NostrService extends GetxService {
 
       final senderName = await _getDisplayName(senderPubkey);
 
-      final rawEvent = jsonEncode(giftWrapEvent.toJson());
+      final rawEvent = jsonEncode(
+        Nip01EventModel.fromEntity(giftWrapEvent).toJson(),
+      );
 
       dev.log('[NostrService] Notification: DM from $senderName');
       _notificationService.showDmNotification(
