@@ -39,7 +39,7 @@ class NotificationService extends GetxService {
     final windowsSettings = WindowsInitializationSettings(
       appName: AppConfig.name,
       appUserModelId: AppConfig.appUserModelId,
-      guid: AppConfig.notificationGUid,
+      guid: AppConfig.notificationGuid,
     );
 
     final initSettings = InitializationSettings(
