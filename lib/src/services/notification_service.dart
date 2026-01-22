@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../config/app_config.dart';
 import '../controllers/notification_history_controller.dart';
 import '../models/models.dart';
 import 'database_service.dart';
@@ -35,7 +36,16 @@ class NotificationService extends GetxService {
       defaultIcon: AssetsLinuxIcon('assets/icons/app_icon.png'),
     );
 
-    final initSettings = InitializationSettings(linux: linuxSettings);
+    final windowsSettings = WindowsInitializationSettings(
+      appName: AppConfig.name,
+      appUserModelId: AppConfig.appUserModelId,
+      guid: AppConfig.notificationGUid,
+    );
+
+    final initSettings = InitializationSettings(
+      linux: linuxSettings,
+      windows: windowsSettings,
+    );
 
     await _notifications!.initialize(
       initSettings,
