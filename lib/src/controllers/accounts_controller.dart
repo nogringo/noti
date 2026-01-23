@@ -29,24 +29,27 @@ class AccountsController extends GetxController {
       final ndkAccounts = ndk.accounts.accounts.values.toList();
       accounts.assignAll(ndkAccounts);
 
-      // Connect all accounts for notifications
-      for (final account in ndkAccounts) {
-        final settings = await _db.getOrCreateNotificationSettings(
-          account.pubkey,
-        );
-        await _nostr.connectAccountFromNdk(account, settings);
-      }
-
       if (accounts.isNotEmpty && selectedAccount.value == null) {
         selectedAccount.value = accounts.first;
       }
-
-      // Load metadata for all accounts
-      _loadAllMetadata();
     } catch (e) {
       error.value = e.toString();
     } finally {
       isLoading.value = false;
+    }
+
+    // Connect accounts and load metadata in background (non-blocking)
+    _connectAccountsInBackground();
+    _loadAllMetadata();
+  }
+
+  Future<void> _connectAccountsInBackground() async {
+    for (final account in accounts) {
+      final settings = await _db.getOrCreateNotificationSettings(
+        account.pubkey,
+      );
+      // Don't await - let it run in background
+      _nostr.connectAccountFromNdk(account, settings);
     }
   }
 
