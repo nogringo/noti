@@ -395,6 +395,86 @@ class _HomePageState extends State<HomePage>
             ],
           ),
         ),
+        const SizedBox(height: 24),
+        Text('Relays', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Obx(() {
+          if (controller.isLoadingRelays.value) {
+            return const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            );
+          }
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.public, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'NIP-65 (${controller.nip65Relays.length})',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (controller.nip65Relays.isEmpty)
+                    Text(
+                      'No relays found',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    )
+                  else
+                    ...controller.nip65Relays.map(
+                      (relay) => Padding(
+                        padding: const EdgeInsets.only(left: 26, bottom: 4),
+                        child: Text(
+                          relay,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.mail, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'DM Relays (${controller.dmRelays.length})',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (controller.dmRelays.isEmpty)
+                    Text(
+                      'No DM relays found (kind 10050)',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    )
+                  else
+                    ...controller.dmRelays.map(
+                      (relay) => Padding(
+                        padding: const EdgeInsets.only(left: 26, bottom: 4),
+                        child: Text(
+                          relay,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        }),
         if (!kIsWeb) ...[
           const SizedBox(height: 24),
           Text(l.application, style: Theme.of(context).textTheme.titleMedium),

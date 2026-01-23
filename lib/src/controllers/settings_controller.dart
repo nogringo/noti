@@ -8,9 +8,13 @@ import 'accounts_controller.dart';
 class SettingsController extends GetxController {
   final DatabaseService _db = Get.find();
   final NostrService _nostr = Get.find();
+  final NdkService _ndkService = Get.find();
   final AccountsController _accounts = Get.find();
 
   final settings = Rxn<NotificationSettings>();
+  final nip65Relays = <String>[].obs;
+  final dmRelays = <String>[].obs;
+  final isLoadingRelays = false.obs;
 
   @override
   void onInit() {
@@ -22,10 +26,65 @@ class SettingsController extends GetxController {
   Future<void> _onAccountChanged(Account? account) async {
     if (account == null) {
       settings.value = null;
+      nip65Relays.clear();
+      dmRelays.clear();
       return;
     }
 
     settings.value = await _db.getOrCreateNotificationSettings(account.pubkey);
+    await _loadRelays(account.pubkey);
+  }
+
+  Future<void> _loadRelays(String pubkey) async {
+    isLoadingRelays.value = true;
+    nip65Relays.clear();
+    dmRelays.clear();
+
+    try {
+      // Fetch NIP-65 relays
+      final nip65 = await _nostr.fetchRelaysForPubkey(pubkey);
+      if (nip65 != null) {
+        nip65Relays.assignAll(nip65);
+      }
+
+      // Fetch DM relays (kind 10050)
+      final dm = await _fetchDmRelays(pubkey);
+      dmRelays.assignAll(dm);
+    } finally {
+      isLoadingRelays.value = false;
+    }
+  }
+
+  Future<List<String>> _fetchDmRelays(String pubkey) async {
+    final ndk = _ndkService.ndk;
+    try {
+      final response = ndk.requests.query(
+        filter: Filter(kinds: [10050], authors: [pubkey], limit: 1),
+      );
+
+      Nip01Event? latestEvent;
+      await for (final event in response.stream.timeout(
+        const Duration(seconds: 10),
+        onTimeout: (sink) => sink.close(),
+      )) {
+        if (latestEvent == null || event.createdAt > latestEvent.createdAt) {
+          latestEvent = event;
+        }
+      }
+
+      if (latestEvent != null) {
+        final relays = <String>[];
+        for (final tag in latestEvent.tags) {
+          if (tag.isNotEmpty && tag[0] == 'relay' && tag.length >= 2) {
+            relays.add(tag[1]);
+          }
+        }
+        if (relays.isNotEmpty) {
+          return relays;
+        }
+      }
+    } catch (_) {}
+    return [];
   }
 
   Future<void> loadSettings(String pubkey) async {

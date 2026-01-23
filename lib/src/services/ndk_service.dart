@@ -27,7 +27,17 @@ class NdkService extends GetxService {
     final cacheManager = SembastCacheManager(db);
 
     _ndk = Ndk(
-      NdkConfig(eventVerifier: Bip340EventVerifier(), cache: cacheManager),
+      NdkConfig(
+        eventVerifier: Bip340EventVerifier(),
+        cache: cacheManager,
+        bootstrapRelays: [
+          "wss://nostr-01.yakihonne.com",
+          "wss://relay.damus.io",
+          "wss://relay.primal.net",
+          "wss://nostr-01.uid.ovh",
+          "wss://nostr-02.uid.ovh",
+        ],
+      ),
     );
 
     // Restore accounts from local storage (includes signers)
