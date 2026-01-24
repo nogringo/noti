@@ -64,7 +64,10 @@ class _HomePageState extends State<HomePage>
     final historyController = Get.find<NotificationHistoryController>();
 
     final scaffold = Scaffold(
+      extendBodyBehindAppBar: !kIsWeb,
       appBar: AppBar(
+        backgroundColor: kIsWeb ? null : Colors.transparent,
+        elevation: kIsWeb ? null : 0,
         title: kIsWeb
             ? Text(l.appTitle)
             : DragToMoveArea(child: Text(l.appTitle)),
@@ -97,82 +100,80 @@ class _HomePageState extends State<HomePage>
       body: Row(
         children: [
           // Left panel - Accounts
-          SizedBox(
-            width: 300,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        l.accounts,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        tooltip: l.addAccount,
-                        onPressed: () => _showAddAccountDialog(context),
-                      ),
-                    ],
+          Material(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: SizedBox(
+              width: 300,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!kIsWeb) const SizedBox(height: kToolbarHeight),
+                  ListTile(
+                    title: Text(
+                      l.accounts,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.add),
+                      tooltip: l.addAccount,
+                      onPressed: () => _showAddAccountDialog(context),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Obx(() {
-                    if (accountsController.isLoading.value) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                  Expanded(
+                    child: Obx(() {
+                      if (accountsController.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                    if (accountsController.accounts.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(l.noAccounts),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () => _showAddAccountDialog(context),
-                              icon: const Icon(Icons.add),
-                              label: Text(l.addAccount),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: accountsController.accounts.length,
-                      itemBuilder: (context, index) {
-                        final account = accountsController.accounts[index];
-                        return Obx(
-                          () => AccountTile(
-                            account: account,
-                            isSelected:
-                                accountsController
-                                    .selectedAccount
-                                    .value
-                                    ?.pubkey ==
-                                account.pubkey,
-                            onTap: () =>
-                                accountsController.selectAccount(account),
-                            onDelete: () =>
-                                _confirmDeleteAccount(context, account),
-                            displayName: accountsController.getAccountName(
-                              account.pubkey,
-                            ),
-                            picture: accountsController.getAccountPicture(
-                              account.pubkey,
-                            ),
+                      if (accountsController.accounts.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(l.noAccounts),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () => _showAddAccountDialog(context),
+                                icon: const Icon(Icons.add),
+                                label: Text(l.addAccount),
+                              ),
+                            ],
                           ),
                         );
-                      },
-                    );
-                  }),
-                ),
-              ],
+                      }
+
+                      return ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: accountsController.accounts.length,
+                        itemBuilder: (context, index) {
+                          final account = accountsController.accounts[index];
+                          return Obx(
+                            () => AccountTile(
+                              account: account,
+                              isSelected:
+                                  accountsController
+                                      .selectedAccount
+                                      .value
+                                      ?.pubkey ==
+                                  account.pubkey,
+                              onTap: () =>
+                                  accountsController.selectAccount(account),
+                              onDelete: () =>
+                                  _confirmDeleteAccount(context, account),
+                              displayName: accountsController.getAccountName(
+                                account.pubkey,
+                              ),
+                              picture: accountsController.getAccountPicture(
+                                account.pubkey,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                ],
+              ),
             ),
           ),
           const VerticalDivider(width: 1),
@@ -180,6 +181,7 @@ class _HomePageState extends State<HomePage>
           Expanded(
             child: Column(
               children: [
+                if (!kIsWeb) const SizedBox(height: kToolbarHeight),
                 TabBar(
                   controller: _tabController,
                   tabs: [

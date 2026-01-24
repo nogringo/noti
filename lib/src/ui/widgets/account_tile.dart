@@ -23,19 +23,18 @@ class AccountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
-      child: ListTile(
-        onTap: onTap,
-        leading: CircleAvatar(
-          backgroundImage: picture != null ? NetworkImage(picture!) : null,
-          child: picture == null ? const Icon(Icons.person) : null,
-        ),
-        title: Text(displayName ?? shortenNpub(account.pubkey)),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline),
-          onPressed: onDelete,
-        ),
+    return ListTile(
+      onTap: onTap,
+      selected: isSelected,
+      selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
+      leading: CircleAvatar(
+        backgroundImage: picture != null ? NetworkImage(picture!) : null,
+        child: picture == null ? const Icon(Icons.person) : null,
+      ),
+      title: Text(displayName ?? shortenNpub(account.pubkey)),
+      trailing: IconButton(
+        icon: const Icon(Icons.delete_outline),
+        onPressed: onDelete,
       ),
     );
   }
