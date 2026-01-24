@@ -16,11 +16,30 @@ class SettingsController extends GetxController {
   final dmRelays = <String>[].obs;
   final isLoadingRelays = false.obs;
 
+  Worker? _loadingWorker;
+
   @override
   void onInit() {
     super.onInit();
     // Listen to account changes
     ever(_accounts.selectedAccount, _onAccountChanged);
+    // Handle initial account loading
+    _initAccountSettings();
+  }
+
+  void _initAccountSettings() {
+    if (!_accounts.isLoading.value && _accounts.selectedAccount.value != null) {
+      _onAccountChanged(_accounts.selectedAccount.value);
+    } else if (_accounts.isLoading.value) {
+      // Wait for loading to complete
+      _loadingWorker = ever(_accounts.isLoading, (isLoading) {
+        if (!isLoading && _accounts.selectedAccount.value != null) {
+          _onAccountChanged(_accounts.selectedAccount.value);
+          _loadingWorker?.dispose();
+          _loadingWorker = null;
+        }
+      });
+    }
   }
 
   Future<void> _onAccountChanged(Account? account) async {
@@ -127,5 +146,11 @@ class SettingsController extends GetxController {
       await _nostr.disconnectAccount(account.pubkey);
       await _nostr.connectAccountFromNdk(account, updated);
     }
+  }
+
+  @override
+  void onClose() {
+    _loadingWorker?.dispose();
+    super.onClose();
   }
 }
