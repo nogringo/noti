@@ -10,6 +10,7 @@ import 'package:ndk/ndk.dart';
 
 import '../../models/notification_history.dart';
 import '../../services/ndk_service.dart';
+import '../../utils/nostr_utils.dart';
 
 class NotificationDetailDialog extends StatefulWidget {
   final NotificationHistory notification;
@@ -173,7 +174,7 @@ class _NotificationDetailDialogState extends State<NotificationDetailDialog>
                       child: Text(
                         _senderMetadata?.displayName ??
                             _senderMetadata?.name ??
-                            npub,
+                            shortenNpub(notification.fromPubkey!),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),

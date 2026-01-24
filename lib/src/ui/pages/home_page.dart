@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../controllers/controllers.dart';
 import '../../models/models.dart';
+import '../../utils/nostr_utils.dart';
 import '../widgets/widgets.dart';
 import 'add_account_dialog.dart';
 
@@ -31,13 +32,6 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  String _shortenPubkey(String pubkey) {
-    if (pubkey.length > 12) {
-      return '${pubkey.substring(0, 8)}...${pubkey.substring(pubkey.length - 4)}';
-    }
-    return pubkey;
   }
 
   @override
@@ -342,7 +336,7 @@ class _HomePageState extends State<HomePage>
             ),
             const SizedBox(width: 12),
             Text(
-              name ?? _shortenPubkey(account.pubkey),
+              name ?? shortenNpub(account.pubkey),
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ],
@@ -518,7 +512,10 @@ class _HomePageState extends State<HomePage>
 
   void _confirmDeleteAccount(BuildContext context, Account account) {
     final l = AppLocalizations.of(context)!;
-    final displayName = _shortenPubkey(account.pubkey);
+    final accountsController = Get.find<AccountsController>();
+    final displayName =
+        accountsController.getAccountName(account.pubkey) ??
+        shortenNpub(account.pubkey);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

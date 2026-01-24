@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
 
 import '../models/models.dart';
+import '../utils/nostr_utils.dart';
 import 'database_service.dart';
 import 'ndk_service.dart';
 import 'notification_service.dart';
@@ -388,8 +389,7 @@ class NostrService extends GetxService {
       }
     } catch (_) {}
     // Fallback: shortened npub
-    final npub = Nip19.encodePubKey(pubkey);
-    return '${npub.substring(0, 8)}...${npub.substring(npub.length - 4)}';
+    return shortenNpub(pubkey);
   }
 
   /// Fetch metadata for a specific pubkey
