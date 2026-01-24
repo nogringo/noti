@@ -46,5 +46,9 @@
   "repostBody": "{name} a reposté votre note",
   "reaction": "Réaction",
   "reactionBody": "{name} a réagi {emoji}",
-  "selectAccountToConfig": "Sélectionnez un compte pour configurer les notifications"
+  "selectAccountToConfig": "Sélectionnez un compte pour configurer les notifications",
+  "close": "Fermer",
+  "maximize": "Agrandir",
+  "quitApp": "Quitter",
+  "quitAppDesc": "Fermer complètement l'application"
 }

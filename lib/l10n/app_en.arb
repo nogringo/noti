@@ -237,5 +237,21 @@
   "selectAccountToConfig": "Select an account to configure notifications",
   "@selectAccountToConfig": {
     "description": "Message shown when no account is selected"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Close button tooltip"
+  },
+  "maximize": "Maximize",
+  "@maximize": {
+    "description": "Maximize button tooltip"
+  },
+  "quitApp": "Quit",
+  "@quitApp": {
+    "description": "Quit application button"
+  },
+  "quitAppDesc": "Close the application completely",
+  "@quitAppDesc": {
+    "description": "Quit application button description"
   }
 }

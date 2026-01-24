@@ -35,6 +35,7 @@ void main(List<String> args) async {
       minimumSize: Size(600, 400),
       center: true,
       title: 'Noti',
+      titleBarStyle: TitleBarStyle.hidden,
     );
 
     await windowManager.waitUntilReadyToShow(windowOptions, () async {

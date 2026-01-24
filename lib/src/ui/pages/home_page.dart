@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,19 +21,39 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WindowListener {
   late TabController _tabController;
+  bool _isMaximized = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    if (!kIsWeb) {
+      windowManager.addListener(this);
+      windowManager.isMaximized().then((value) {
+        setState(() => _isMaximized = value);
+      });
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    if (!kIsWeb) {
+      windowManager.removeListener(this);
+    }
     super.dispose();
+  }
+
+  @override
+  void onWindowMaximize() {
+    setState(() => _isMaximized = true);
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    setState(() => _isMaximized = false);
   }
 
   @override
@@ -41,16 +63,35 @@ class _HomePageState extends State<HomePage>
     final settingsController = Get.find<SettingsController>();
     final historyController = Get.find<NotificationHistoryController>();
 
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
-        title: Text(l.appTitle),
+        title: kIsWeb
+            ? Text(l.appTitle)
+            : DragToMoveArea(child: Text(l.appTitle)),
+        flexibleSpace: kIsWeb
+            ? null
+            : const DragToMoveArea(child: SizedBox.expand()),
         actions: [
-          if (!kIsWeb)
-            IconButton(
-              icon: const Icon(Icons.minimize),
-              tooltip: l.minimizeToTray,
+          if (!kIsWeb) ...[
+            WindowCaptionButton.minimize(
+              brightness: Theme.of(context).brightness,
+              onPressed: windowManager.minimize,
+            ),
+            if (_isMaximized)
+              WindowCaptionButton.unmaximize(
+                brightness: Theme.of(context).brightness,
+                onPressed: windowManager.unmaximize,
+              )
+            else
+              WindowCaptionButton.maximize(
+                brightness: Theme.of(context).brightness,
+                onPressed: windowManager.maximize,
+              ),
+            WindowCaptionButton.close(
+              brightness: Theme.of(context).brightness,
               onPressed: () => windowManager.hide(),
             ),
+          ],
         ],
       ),
       body: Row(
@@ -210,6 +251,11 @@ class _HomePageState extends State<HomePage>
         ],
       ),
     );
+
+    if (kIsWeb) {
+      return scaffold;
+    }
+    return DragToResizeArea(child: scaffold);
   }
 
   Widget _buildHistoryPanel(
@@ -497,6 +543,12 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => exit(0),
+            icon: const Icon(Icons.power_settings_new),
+            label: Text(l.quitApp),
           ),
         ],
       ],
