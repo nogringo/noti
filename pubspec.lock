@@ -457,10 +457,10 @@ packages:
     dependency: "direct main"
     description:
       name: ndk
-      sha256: b741ba3ddc7a4f7905569725f1bf203fcff1362f0babf5cccf556cde562f8e01
+      sha256: "720188a7ac7d0e0b3fca83fe5f1706d74eb3b7d2dac3496c3bd1bba4f87c7689"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.1-dev.0"
+    version: "0.7.1-dev.10"
   ndk_amber:
     dependency: transitive
     description:
@@ -469,22 +469,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.0"
+  ndk_flutter:
+    dependency: "direct main"
+    description:
+      name: ndk_flutter
+      sha256: "73b05241934f8760621db39c35b2650d4ea45c7c0878f2b3c7b43e8e5ea456d6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   nip07_event_signer:
     dependency: transitive
     description:
       name: nip07_event_signer
-      sha256: "574d1b9cb6412121ecf7a9cf1b86772ab9eb30cfe8d051a7d72bbd22351fa93b"
+      sha256: "5c51d0f32bc83c21f6668d5c49a8af7661ea6411631313832a9c5b1f7b364e9b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.6-dev.0"
-  nostr_widgets:
-    dependency: "direct main"
-    description:
-      name: nostr_widgets
-      sha256: b640ebf7b875659ab35fbbfec1bbb18cf889890f54f8a488691b1ade66b1af1e
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.1"
+    version: "1.0.5"
   package_info_plus:
     dependency: "direct main"
     description:
@@ -601,10 +601,10 @@ packages:
     dependency: transitive
     description:
       name: pretty_qr_code
-      sha256: "2291db3f68d70a3dcd46c6bd599f30991ae4c02f27f36215fbb3f4865a609259"
+      sha256: "474f8a4512113fba06f14a6ec9bbf42353b4e651d7a520e3096f2a9b6bbe7a8a"
       url: "https://pub.dev"
     source: hosted
-    version: "3.5.0"
+    version: "3.6.0"
   protobuf:
     dependency: transitive
     description:
@@ -862,10 +862,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_web
-      sha256: "4bd2b7b4dc4d4d0b94e5babfffbca8eac1a126c7f3d6ecbc1a11013faa3abba2"
+      sha256: d0412fcf4c6b31ecfdb7762359b7206ffba3bbffd396c6d9f9c4616ece476c1f
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.1"
+    version: "2.4.2"
   url_launcher_windows:
     dependency: transitive
     description:
@@ -980,4 +980,4 @@ packages:
     version: "1.2.0"
 sdks:
   dart: ">=3.10.4 <4.0.0"
-  flutter: ">=3.35.0"
+  flutter: ">=3.38.0"

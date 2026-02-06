@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:ndk/ndk.dart';
-import 'package:nostr_widgets/nostr_widgets.dart';
+import 'package:ndk_flutter/ndk_flutter.dart';
 
 import '../../controllers/controllers.dart';
 import '../../services/services.dart';
@@ -16,7 +15,7 @@ class AddAccountDialog extends StatefulWidget {
 class _AddAccountDialogState extends State<AddAccountDialog> {
   final NdkService _ndkService = Get.find();
 
-  Ndk get _ndk => _ndkService.ndk;
+  NdkFlutter get _ndkFlutter => _ndkService.ndkFlutter;
 
   Future<void> _onLoggedIn() async {
     // Save NDK account state (preserves signer for AUTH)
@@ -57,7 +56,10 @@ class _AddAccountDialogState extends State<AddAccountDialog> {
               const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
-                  child: NLogin(ndk: _ndk, onLoggedIn: _onLoggedIn),
+                  child: NLogin(
+                    ndkFlutter: _ndkFlutter,
+                    onLoggedIn: _onLoggedIn,
+                  ),
                 ),
               ),
             ],

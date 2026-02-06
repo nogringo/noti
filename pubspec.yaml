@@ -13,8 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   get: ^4.7.3
-  ndk: 0.7.1-dev.0
-  nostr_widgets: 1.2.1
+  ndk: ^0.7.1-dev.10
   flutter_local_notifications: ^19.5.0
   sembast: ^3.8.6
   path_provider: ^2.1.5
@@ -30,6 +29,7 @@ dependencies:
   web: ^1.1.1
   flutter_highlight: ^0.7.0
   sembast_cache_manager: ^1.0.5
+  ndk_flutter: ^0.0.1
 
 dev_dependencies:
   flutter_test:

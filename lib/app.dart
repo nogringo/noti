@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'package:get/get.dart';
-import 'package:nostr_widgets/l10n/app_localizations.dart' as nostr_widgets;
+import 'package:ndk_flutter/l10n/app_localizations.dart' as ndk_flutter;
 import 'package:system_theme/system_theme.dart';
 
 import 'src/bindings/app_bindings.dart';
@@ -19,7 +19,7 @@ class NotiApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: [
         ...AppLocalizations.localizationsDelegates,
-        nostr_widgets.AppLocalizations.delegate,
+        ndk_flutter.AppLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       locale: Get.deviceLocale,
