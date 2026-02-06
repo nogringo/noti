@@ -50,5 +50,8 @@
   "close": "Fermer",
   "maximize": "Agrandir",
   "quitApp": "Quitter",
-  "quitAppDesc": "Fermer complètement l'application"
+  "quitAppDesc": "Fermer complètement l'application",
+  "clearCache": "Vider le cache",
+  "clearCacheTitle": "Vider le cache ?",
+  "clearCacheContent": "Cela supprimera toutes les données en cache."
 }

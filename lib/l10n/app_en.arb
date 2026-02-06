@@ -253,5 +253,17 @@
   "quitAppDesc": "Close the application completely",
   "@quitAppDesc": {
     "description": "Quit application button description"
+  },
+  "clearCache": "Clear cache",
+  "@clearCache": {
+    "description": "Clear cache button"
+  },
+  "clearCacheTitle": "Clear cache?",
+  "@clearCacheTitle": {
+    "description": "Clear cache dialog title"
+  },
+  "clearCacheContent": "This will delete all cached data.",
+  "@clearCacheContent": {
+    "description": "Clear cache dialog content"
   }
 }

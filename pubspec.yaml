@@ -28,7 +28,7 @@ dependencies:
   sembast_web: ^2.4.3
   web: ^1.1.1
   flutter_highlight: ^0.7.0
-  sembast_cache_manager: ^1.0.5
+  sembast_cache_manager: ^1.0.7-dev.10
   ndk_flutter: ^0.0.1
 
 dev_dependencies:

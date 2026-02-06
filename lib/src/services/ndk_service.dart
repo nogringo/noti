@@ -60,4 +60,16 @@ class NdkService extends GetxService {
 
   /// Get logged account
   Account? get loggedAccount => _ndk.accounts.getLoggedAccount();
+
+  /// Clear all cached data from the database
+  Future<void> clearCache() async {
+    final cache = _ndk.config.cache;
+    await cache.removeAllEvents();
+    await cache.removeAllUserRelayLists();
+    await cache.removeAllRelaySets();
+    await cache.removeAllContactLists();
+    await cache.removeAllMetadatas();
+    await cache.removeAllNip05s();
+    await cache.removeAllFilterFetchedRangeRecords();
+  }
 }

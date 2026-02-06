@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../controllers/controllers.dart';
+import '../../services/ndk_service.dart';
 import '../../models/models.dart';
 import '../../utils/nostr_utils.dart';
 import '../widgets/widgets.dart';
@@ -360,6 +361,31 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  void _confirmClearCache(BuildContext context, AppLocalizations l) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.clearCacheTitle),
+        content: Text(l.clearCacheContent),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Get.find<NdkService>().clearCache();
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            child: Text(l.clear),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSettingsPanel(
     BuildContext context,
     AppLocalizations l,
@@ -546,13 +572,25 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: () => exit(0),
-            icon: const Icon(Icons.power_settings_new),
-            label: Text(l.quitApp),
-          ),
         ],
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: () => _confirmClearCache(context, l),
+              icon: const Icon(Icons.cleaning_services),
+              label: Text(l.clearCache),
+            ),
+            if (!kIsWeb) ...[
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => exit(0),
+                icon: const Icon(Icons.power_settings_new),
+                label: Text(l.quitApp),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
