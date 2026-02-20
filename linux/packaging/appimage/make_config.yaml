@@ -1,0 +1,11 @@
+display_name: Noti
+icon: linux/icon.png
+keywords:
+  - nostr
+  - notifications
+  - dms
+  - zaps
+categories:
+  - Network
+  - InstantMessaging
+startup_wm_class: ovh.uid.noti

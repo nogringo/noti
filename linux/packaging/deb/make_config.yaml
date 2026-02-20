@@ -1,0 +1,18 @@
+display_name: Noti
+package_name: noti
+maintainer:
+  name: Russell
+  email: npub1kg4sdvz3l4fr99n2jdz2vdxe2mpacva87hkdetv76ywacsfq5leqquw5te
+priority: optional
+section: net
+installed_size: 35000
+icon: linux/icon.png
+keywords:
+  - nostr
+  - notifications
+  - dms
+  - zaps
+categories:
+  - Network
+  - InstantMessaging
+startup_wm_class: ovh.uid.noti
