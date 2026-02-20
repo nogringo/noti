@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ndk/ndk.dart';
+import 'package:ndk_flutter/ndk_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -255,10 +256,18 @@ class _HomePageState extends State<HomePage>
       ),
     );
 
+    final ndkFlutter = Get.find<NdkService>().ndkFlutter;
+    final body = Stack(
+      children: [
+        scaffold,
+        NPendingRequests(ndkFlutter: ndkFlutter),
+      ],
+    );
+
     if (kIsWeb) {
-      return scaffold;
+      return body;
     }
-    return DragToResizeArea(child: scaffold);
+    return DragToResizeArea(child: body);
   }
 
   Widget _buildHistoryPanel(
