@@ -12,6 +12,7 @@ import '../../controllers/controllers.dart';
 import '../../services/ndk_service.dart';
 import '../../models/models.dart';
 import '../../utils/nostr_utils.dart';
+import '../layout_constants.dart';
 import '../widgets/widgets.dart';
 import 'add_account_dialog.dart';
 
@@ -23,39 +24,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin, WindowListener {
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isMaximized = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    if (!kIsWeb) {
-      windowManager.addListener(this);
-      windowManager.isMaximized().then((value) {
-        setState(() => _isMaximized = value);
-      });
-    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    if (!kIsWeb) {
-      windowManager.removeListener(this);
-    }
     super.dispose();
-  }
-
-  @override
-  void onWindowMaximize() {
-    setState(() => _isMaximized = true);
-  }
-
-  @override
-  void onWindowUnmaximize() {
-    setState(() => _isMaximized = false);
   }
 
   @override
@@ -64,210 +45,239 @@ class _HomePageState extends State<HomePage>
     final accountsController = Get.find<AccountsController>();
     final settingsController = Get.find<SettingsController>();
     final historyController = Get.find<NotificationHistoryController>();
+    final ndkFlutter = Get.find<NdkService>().ndkFlutter;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDesktop = !kIsWeb;
 
-    final scaffold = Scaffold(
-      extendBodyBehindAppBar: !kIsWeb,
-      appBar: AppBar(
-        backgroundColor: kIsWeb ? null : Colors.transparent,
-        elevation: kIsWeb ? null : 0,
-        title: kIsWeb
-            ? Text(l.appTitle)
-            : DragToMoveArea(child: Text(l.appTitle)),
-        flexibleSpace: kIsWeb
-            ? null
-            : const DragToMoveArea(child: SizedBox.expand()),
-        actions: [
-          if (!kIsWeb) ...[
-            WindowCaptionButton.minimize(
-              brightness: Theme.of(context).brightness,
-              onPressed: windowManager.minimize,
-            ),
-            if (_isMaximized)
-              WindowCaptionButton.unmaximize(
-                brightness: Theme.of(context).brightness,
-                onPressed: windowManager.unmaximize,
-              )
-            else
-              WindowCaptionButton.maximize(
-                brightness: Theme.of(context).brightness,
-                onPressed: windowManager.maximize,
-              ),
-            WindowCaptionButton.close(
-              brightness: Theme.of(context).brightness,
-              onPressed: () => windowManager.hide(),
-            ),
-          ],
-        ],
-      ),
-      body: Row(
+    final content = Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Left panel - Accounts
-          Material(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: SizedBox(
-              width: 300,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!kIsWeb) const SizedBox(height: kToolbarHeight),
-                  ListTile(
-                    title: Text(
-                      l.accounts,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.add),
-                      tooltip: l.addAccount,
-                      onPressed: () => _showAddAccountDialog(context),
-                    ),
-                  ),
-                  Expanded(
-                    child: Obx(() {
-                      if (accountsController.isLoading.value) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (accountsController.accounts.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(l.noAccounts),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () => _showAddAccountDialog(context),
-                                icon: const Icon(Icons.add),
-                                label: Text(l.addAccount),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: accountsController.accounts.length,
-                        itemBuilder: (context, index) {
-                          final account = accountsController.accounts[index];
-                          return Obx(
-                            () => AccountTile(
-                              account: account,
-                              isSelected:
-                                  accountsController
-                                      .selectedAccount
-                                      .value
-                                      ?.pubkey ==
-                                  account.pubkey,
-                              onTap: () =>
-                                  accountsController.selectAccount(account),
-                              onDelete: () =>
-                                  _confirmDeleteAccount(context, account),
-                              displayName: accountsController.getAccountName(
-                                account.pubkey,
-                              ),
-                              picture: accountsController.getAccountPicture(
-                                account.pubkey,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }),
-                  ),
-                ],
-              ),
+          // Background
+          Container(color: colorScheme.tertiaryContainer),
+          // Main content with padding
+          Padding(
+            padding: EdgeInsets.only(
+              top: isDesktop
+                  ? LayoutConstants.windowCaptionHeight
+                  : LayoutConstants.shellPadding,
+              left: LayoutConstants.shellPadding,
+              right: LayoutConstants.shellPadding,
+              bottom: LayoutConstants.shellPadding,
             ),
-          ),
-          const VerticalDivider(width: 1),
-          // Right panel - Tabs (History / Settings)
-          Expanded(
-            child: Column(
+            child: Row(
               children: [
-                if (!kIsWeb) const SizedBox(height: kToolbarHeight),
-                TabBar(
-                  controller: _tabController,
-                  tabs: [
-                    Obx(
-                      () => Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(l.history),
-                            if (historyController.unreadCount.value > 0) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  '${historyController.unreadCount.value}',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
-                                    fontSize: 12,
+                // Left panel - Accounts
+                Container(
+                  width: LayoutConstants.accountsPanelWidth,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface.withValues(alpha: 0.9),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(LayoutConstants.borderRadius),
+                      bottomLeft: Radius.circular(LayoutConstants.borderRadius),
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListTile(
+                        title: Text(
+                          l.accounts,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.add),
+                          tooltip: l.addAccount,
+                          onPressed: () => _showAddAccountDialog(context),
+                        ),
+                      ),
+                      Expanded(
+                        child: Obx(() {
+                          if (accountsController.isLoading.value) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          if (accountsController.accounts.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(l.noAccounts),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton.icon(
+                                    onPressed: () =>
+                                        _showAddAccountDialog(context),
+                                    icon: const Icon(Icons.add),
+                                    label: Text(l.addAccount),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: accountsController.accounts.length,
+                            itemBuilder: (context, index) {
+                              final account =
+                                  accountsController.accounts[index];
+                              return Obx(
+                                () => AccountTile(
+                                  account: account,
+                                  isSelected:
+                                      accountsController
+                                          .selectedAccount
+                                          .value
+                                          ?.pubkey ==
+                                      account.pubkey,
+                                  onTap: () =>
+                                      accountsController.selectAccount(account),
+                                  onDelete: () =>
+                                      _confirmDeleteAccount(context, account),
+                                  displayName: accountsController
+                                      .getAccountName(account.pubkey),
+                                  picture: accountsController.getAccountPicture(
+                                    account.pubkey,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ],
+                              );
+                            },
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: colorScheme.outlineVariant,
+                ),
+                // Right panel - Tabs (History / Settings)
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(LayoutConstants.borderRadius),
+                        bottomRight: Radius.circular(
+                          LayoutConstants.borderRadius,
                         ),
                       ),
                     ),
-                    Tab(text: l.settings),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      // History tab
-                      _buildHistoryPanel(context, l, historyController),
-                      // Settings tab
-                      Obx(() {
-                        final account =
-                            accountsController.selectedAccount.value;
-                        final settings = settingsController.settings.value;
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        TabBar(
+                          controller: _tabController,
+                          tabs: [
+                            Obx(
+                              () => Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(l.history),
+                                    if (historyController.unreadCount.value >
+                                        0) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.primary,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${historyController.unreadCount.value}',
+                                          style: TextStyle(
+                                            color: colorScheme.onPrimary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Tab(text: l.settings),
+                          ],
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              // History tab
+                              _buildHistoryPanel(context, l, historyController),
+                              // Settings tab
+                              Obx(() {
+                                final account =
+                                    accountsController.selectedAccount.value;
+                                final settings =
+                                    settingsController.settings.value;
 
-                        if (account == null || settings == null) {
-                          return Center(child: Text(l.selectAccountToConfig));
-                        }
+                                if (account == null || settings == null) {
+                                  return Center(
+                                    child: Text(l.selectAccountToConfig),
+                                  );
+                                }
 
-                        return _buildSettingsPanel(
-                          context,
-                          l,
-                          account,
-                          settings,
-                          settingsController,
-                        );
-                      }),
-                    ],
+                                return _buildSettingsPanel(
+                                  context,
+                                  l,
+                                  account,
+                                  settings,
+                                  settingsController,
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          // Window caption (desktop only)
+          if (isDesktop)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: LayoutConstants.windowCaptionHeight,
+              child: Row(
+                children: [
+                  Expanded(child: DragToMoveArea(child: Container())),
+                  SizedBox(
+                    width: 154,
+                    child: WindowCaption(
+                      brightness: Theme.of(context).brightness,
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // Pending requests widget
+          NPendingRequests(ndkFlutter: ndkFlutter),
         ],
       ),
     );
 
-    final ndkFlutter = Get.find<NdkService>().ndkFlutter;
-    final body = Stack(
-      children: [
-        scaffold,
-        NPendingRequests(ndkFlutter: ndkFlutter),
-      ],
-    );
-
     if (kIsWeb) {
-      return body;
+      return content;
     }
-    return DragToResizeArea(child: body);
+    return DragToResizeArea(child: content);
   }
 
   Widget _buildHistoryPanel(
